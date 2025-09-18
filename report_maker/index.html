@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dynamic Report Maker</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="app-header">
+    <h1>Dynamic Report Maker</h1>
+    <div class="actions">
+      <button id="btn-save" title="Save to localStorage">Save</button>
+      <button id="btn-export-md" class="primary" title="Export current report to a Markdown file (.md)">Export Markdown</button>
+      <button id="btn-copy-md" title="Copy current report as Markdown to clipboard">Copy Markdown</button>
+      <button id="btn-export-pdf" title="Export a paginated PDF using print styles">Export PDF</button>
+      <button id="btn-export-normalized" title="Export JSON matching normalized schema template">Export Normalized JSON</button>
+      <button id="btn-export-json" title="Export current report data to JSON">Export JSON</button>
+      <label class="import-label">
+        <input type="file" id="input-import-json" accept="application/json" />
+        Import JSON
+      </label>
+      <button id="btn-reset" class="danger" title="Reset to default template (careful)">Reset</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <aside class="sidebar" aria-label="Sections">
+      <div class="sidebar-header">
+        <h2>Sections</h2>
+        <small>Drag to reorder. Click to edit.</small>
+      </div>
+      <ul id="sections-list" class="sections-list" aria-live="polite"></ul>
+    </aside>
+
+    <section class="editor" aria-label="Editor">
+      <div class="editor-header">
+        <h2 id="editor-title">Edit Section</h2>
+        <div class="section-meta">
+          <label>
+            Number
+            <input id="field-number" type="text" placeholder="e.g., 1.1 or 2.2.3" />
+          </label>
+          <label class="grow">
+            Title
+            <input id="field-title" type="text" placeholder="Section title" />
+          </label>
+        </div>
+      </div>
+      <div class="editor-body">
+        <label class="grow">
+          Content
+          <textarea id="field-content" rows="14" placeholder="Write content for this section..."></textarea>
+        </label>
+        <div class="attachments">
+          <div class="attachments-header">
+            <h3>Attachments & Links</h3>
+            <button id="btn-add-attachment" type="button">+ Add Attachment</button>
+          </div>
+          <ul id="attachments-list" class="attachments-list"></ul>
+          <label>
+            Reference Link (URL or file path)
+            <input id="field-link" type="text" placeholder="https://example.com or C:\\path\\to\\file.pdf" />
+          </label>
+        </div>
+
+        <section class="normalized-editor" aria-label="Normalized schema editor (advanced)">
+          <div class="normalized-header">
+            <h3>Normalized Schema (advanced)</h3>
+            <div class="normalized-actions">
+              <button id="btn-gen-normalized" type="button" title="Regenerate from current sections">Regenerate from Sections</button>
+              <button id="btn-validate-normalized" type="button" title="Validate JSON against minimal schema">Validate</button>
+              <label class="checkbox" title="When checked, Export Normalized JSON will use this edited JSON if valid">
+                <input id="chk-use-edited" type="checkbox" /> Use edited JSON for export
+              </label>
+            </div>
+          </div>
+          <textarea id="field-normalized-json" rows="12" placeholder="{}"></textarea>
+          <div id="normalized-status" class="status" aria-live="polite"></div>
+        </section>
+      </div>
+      <div class="editor-footer">
+        <button id="btn-apply" class="primary">Apply Changes</button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <small>All data is stored locally in your browser. Export regularly to keep a backup.</small>
+  </footer>
+
+  <!-- Hidden root used to build a print-friendly report -->
+  <div id="print-root" class="print-root" aria-hidden="true"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>

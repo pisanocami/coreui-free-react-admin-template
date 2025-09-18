@@ -1,0 +1,149 @@
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  color: #1f2937;
+  background: #f8fafc;
+}
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 16px;
+  background: #0f172a;
+  color: #e2e8f0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+.app-header h1 { font-size: 18px; margin: 0; }
+.actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+button, .import-label {
+  background: #334155;
+  color: #e2e8f0;
+  border: 1px solid #475569;
+  border-radius: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+  font-weight: 600;
+}
+button.primary { background: #2563eb; border-color: #1d4ed8; }
+button.danger { background: #b91c1c; border-color: #991b1b; }
+button:disabled { opacity: 0.6; cursor: not-allowed; }
+.import-label { display: inline-flex; align-items: center; gap: 8px; }
+.import-label input { display: none; }
+
+.layout {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 16px;
+  padding: 16px;
+  min-height: calc(100vh - 64px);
+}
+.sidebar {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 12px;
+}
+.sidebar-header h2 { margin: 0 0 4px 0; font-size: 16px; }
+.sidebar-header small { color: #6b7280; }
+.sections-list {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.sections-list li {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: grab;
+}
+.sections-list li.dragging { opacity: 0.5; }
+.sections-list li .grab { font-size: 18px; color: #9ca3af; }
+.sections-list li .meta { display: flex; flex-direction: column; }
+.sections-list li .meta .num { font-weight: 700; color: #374151; }
+.sections-list li .meta .title { color: #6b7280; font-size: 12px; }
+.sections-list li.active { border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37,99,235,0.2); background: #eef2ff; }
+
+.editor {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.editor-header h2 { margin: 0; font-size: 18px; }
+.section-meta { display: flex; gap: 12px; align-items: flex-end; }
+.section-meta label { display: flex; flex-direction: column; gap: 6px; font-weight: 600; color: #334155; }
+.section-meta .grow { flex: 1; }
+input[type="text"], textarea {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font: inherit;
+  background: #fff;
+}
+textarea { resize: vertical; }
+
+.editor-body { display: flex; flex-direction: column; gap: 12px; }
+.attachments { border-top: 1px dashed #e5e7eb; padding-top: 10px; }
+.attachments-header { display: flex; align-items: center; justify-content: space-between; }
+.attachments-list { list-style: none; padding: 0; margin: 8px 0; display: flex; flex-direction: column; gap: 8px; }
+.attachments-list li { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; align-items: center; }
+.attachments-list li input { width: 100%; }
+.attachments-list li button { padding: 6px 8px; }
+
+.editor-footer { display: flex; justify-content: flex-end; }
+
+.app-footer {
+  text-align: center;
+  padding: 12px 16px;
+  color: #64748b;
+}
+
+@media (max-width: 960px) {
+  .layout { grid-template-columns: 1fr; }
+}
+
+/* --- Print Styles for PDF Export --- */
+.print-root { display: none; }
+.print-root .page-title { font-size: 22px; margin: 0 0 8px 0; color: #0f172a; }
+.print-root .section { margin: 0 0 16px 0; }
+.print-root .section .content { white-space: pre-wrap; line-height: 1.45; }
+.print-root .attachments { margin-top: 8px; }
+.print-root .attachments h4 { margin: 0 0 6px 0; font-size: 14px; }
+.print-root .attachments ul { margin: 0; padding-left: 18px; }
+
+@page {
+  size: A4;
+  margin: 16mm;
+}
+
+@media print {
+  /* Hide the app UI, show the print document */
+  .app-header, .layout, .app-footer { display: none !important; }
+  .print-root { display: block !important; color: #111; }
+
+  h1, h2, h3, h4, h5 { color: #111; break-after: avoid; }
+  h2 { font-size: 18px; margin: 16px 0 6px; }
+  h3 { font-size: 16px; margin: 12px 0 6px; }
+  h4 { font-size: 14px; margin: 10px 0 6px; }
+  h5 { font-size: 13px; margin: 8px 0 4px; }
+
+  /* Page break before major sections (H2) except the first one */
+  .section.page-break-before { break-before: page; }
+}
