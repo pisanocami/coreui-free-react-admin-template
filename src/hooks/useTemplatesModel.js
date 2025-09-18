@@ -11,6 +11,9 @@ function seedCatalog() {
     key: s.key,
     defaultNumber: s.number || '',
     defaultTitle: s.title,
+    description: '',
+    usesPrompt: false,
+    promptText: '',
   }))
 }
 
@@ -179,11 +182,11 @@ export function useTemplatesModel() {
   }
 
   // Sections Catalog API
-  function createSection({ key, defaultNumber = '', defaultTitle = 'Untitled' }) {
+  function createSection({ key, defaultNumber = '', defaultTitle = 'Untitled', description = '', usesPrompt = false, promptText = '' }) {
     const id = crypto.randomUUID()
     setState((prev) => ({
       ...prev,
-      sections: { ...prev.sections, [id]: { id, key: key || defaultTitle.toLowerCase().replace(/[^a-z0-9]+/g, '_'), defaultNumber, defaultTitle } },
+      sections: { ...prev.sections, [id]: { id, key: key || defaultTitle.toLowerCase().replace(/[^a-z0-9]+/g, '_'), defaultNumber, defaultTitle, description, usesPrompt, promptText } },
     }))
     return id
   }
