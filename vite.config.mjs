@@ -41,6 +41,8 @@ export default defineConfig(() => {
     },
     server: {
       port: 3000,
+      // Allow all external hosts (disables host checking)
+      allowedHosts: true,
       proxy: {
         // https://vitejs.dev/config/server-options.html
       },
