@@ -1,0 +1,18 @@
+﻿
+> @coreui/coreui-free-react-admin-template@5.5.0 build
+> vite build
+
+[36mvite v7.1.6 [32mbuilding for production...[36m[39m
+transforming...
+node.exe : [33msrc/pages/Sections/Sections.jsx (202:49): "cilEye" is not exported by 
+"node_modules/@coreui/icons/dist/esm/free/index.js", imported by "src/pages/Sections/Sections.jsx".[39m
+En línea: 1 Carácter: 1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ([33msrc/pages/...ions.jsx".[39m:String) [], RemoteExcepti 
+   on
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+[32mÔ£ô[39m 3376 modules transformed.
+[33mGenerated an empty chunk: "charts".[39m
+rendering chunks...

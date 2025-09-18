@@ -48,6 +48,12 @@ if (import.meta && import.meta.env && import.meta.env.DEV) {
       to: '/sections',
       icon: <CIcon icon={cilDescription} customClassName="nav-icon" />,
     },
+    {
+      component: CNavItem,
+      name: 'Mock Reports',
+      to: '/admin/mock-reports',
+      icon: <CIcon icon={cilPuzzle} customClassName="nav-icon" />,
+    },
   )
 }
 

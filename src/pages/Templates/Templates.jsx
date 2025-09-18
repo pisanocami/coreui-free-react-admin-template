@@ -35,6 +35,10 @@ const Templates = () => {
   const catalogArray = useMemo(() => Object.values(sectionsCatalog), [sectionsCatalog])
 
   const currentSectionIds = currentTemplate?.sectionIds || []
+  const availableSections = useMemo(
+    () => catalogArray.filter((s) => !currentSectionIds.includes(s.id)),
+    [catalogArray, currentSectionIds],
+  )
   const selectedSectionId = currentSectionIds[selectedIdx]
   const selectedSection = sectionsCatalog[selectedSectionId]
 
@@ -123,7 +127,7 @@ const Templates = () => {
                   e.target.value = ''
                 }}>
                   <option value="">Seleccionar sección…</option>
-                  {catalogArray.map((s) => (
+                  {availableSections.map((s) => (
                     <option key={s.id} value={s.id}>{s.defaultNumber ? s.defaultNumber + ' ' : ''}{s.defaultTitle}</option>
                   ))}
                 </CFormSelect>
