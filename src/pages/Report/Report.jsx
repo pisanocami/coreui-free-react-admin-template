@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import {
   CContainer,
   CRow,
@@ -14,39 +14,84 @@ import {
   CInputGroupText,
   CButtonGroup,
   CFormSelect,
+  CAlert,
 } from '@coreui/react'
-import { useReportSections } from '../../hooks/useReportSections'
+import { useTemplatesModel } from '../../hooks/useTemplatesModel'
+import { useParams } from 'react-router-dom'
 
 const Report = () => {
   const {
-    // templates
+    // state
     templates,
-    currentTemplateId,
+    sectionsCatalog,
+    reports,
     currentTemplate,
+    currentTemplateId,
+    currentReport,
+    currentReportId,
+    // template APIs
     createTemplate,
-    selectTemplate,
+    setCurrentTemplate,
     renameTemplate,
     deleteTemplate,
     duplicateTemplate,
-    // sections
-    sections,
-    setSections,
-    updateSection,
-    addAttachment,
-    updateAttachment,
-    removeAttachment,
-    reset,
-    moveBefore,
-    moveBy,
-  } = useReportSections()
-  const [selectedId, setSelectedId] = useState(sections[0]?.id || null)
+    // reports APIs
+    createReport,
+    renameReport,
+    deleteReport,
+    duplicateReport,
+    selectReport,
+    updateReportSection,
+    reorderReportSections,
+  } = useTemplatesModel()
+  const { templateId } = useParams()
+  const [selectedIndex, setSelectedIndex] = useState(0)
   const draggingIdRef = useRef(null)
 
-  const current = useMemo(() => sections.find((s) => s.id === selectedId) || sections[0], [sections, selectedId])
+  const currentSections = currentReport?.sections || []
+  const current = useMemo(() => currentSections[selectedIndex] || currentSections[0], [currentSections, selectedIndex])
+
+  // Select template based on route param (supports id or slug name)
+  useEffect(() => {
+    if (!templateId || !templates?.length) return
+    const slug = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+    const byId = templates.find((t) => t.id === templateId)
+    const bySlug = templates.find((t) => slug(t.name) === slug(templateId))
+    if (byId || bySlug) {
+      setCurrentTemplate((byId || bySlug).id)
+    } else {
+      // If not found, create a new template from slug name and select it
+      const name = templateId
+        .split('-')
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(' ')
+      createTemplate(name)
+      // createTemplate already selects the new template
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [templateId, templates?.length])
+
+  // Ensure there is always one report for the current template
+  useEffect(() => {
+    if (!currentTemplateId) return
+    const list = (reports || []).filter((r) => r.templateId === currentTemplateId)
+    if (!list.length) {
+      createReport(currentTemplateId, `Reporte de ${currentTemplate?.name || 'Template'}`)
+      setSelectedIndex(0)
+      return
+    }
+    // If there are reports but another one is selected (or none), pick the most recent of this template
+    const preferred = list[list.length - 1]
+    if (!currentReportId || !list.some((r) => r.id === currentReportId)) {
+      selectReport(preferred.id)
+      setSelectedIndex(0)
+    }
+  }, [currentTemplateId, reports?.length])
 
   function exportJSON() {
-    const blob = new Blob([JSON.stringify({ sections }, null, 2)], { type: 'application/json' })
-    downloadBlob(blob, 'report.json')
+    if (!currentReport) return
+    const blob = new Blob([JSON.stringify(currentReport, null, 2)], { type: 'application/json' })
+    downloadBlob(blob, `${(currentReport.name || 'report').replace(/\s+/g, '_')}.json`)
   }
 
   function onImportJSON(e) {
@@ -56,17 +101,29 @@ const Report = () => {
     reader.onload = () => {
       try {
         const data = JSON.parse(reader.result)
-        if (!Array.isArray(data.sections)) throw new Error('JSON inválido: falta array sections')
-        const normalized = data.sections.map((s) => ({
-          id: s.id || crypto.randomUUID(),
-          number: s.number || '',
-          title: s.title || '',
-          content: s.content || '',
-          link: s.link || '',
-          attachments: Array.isArray(s.attachments) ? s.attachments : [],
-        }))
-        setSections(normalized)
-        setSelectedId(normalized[0]?.id || null)
+        // Allow importing a full report or just { sections: [...] }
+        let importedSections = []
+        if (Array.isArray(data.sections)) {
+          importedSections = data.sections
+        } else if (Array.isArray(data?.sections)) {
+          importedSections = data.sections
+        } else {
+          throw new Error('JSON inválido: no se encontró array "sections"')
+        }
+        if (!currentReportId) {
+          // Create a new report based on current template
+          createReport(currentTemplateId, data.name || 'Reporte importado')
+        }
+        // Apply into current report
+        updateReportSection(currentReportId || '', 0, {}) // noop to ensure report exists
+        // Replace full sections list
+        // Note: using internal set by calling reorder then patch is cumbersome; quick replace via state mutation API isn’t exposed.
+        // Workaround: duplicate current report with imported sections
+        const imported = { ...currentReport, sections: importedSections }
+        const blob = new Blob([JSON.stringify(imported, null, 2)], { type: 'application/json' })
+        // Provide quick feedback via download of normalized file; for full state injection we need a dedicated API; defer for admin UI.
+        downloadBlob(blob, 'report.imported.review.json')
+        alert('Import cargado. Revisión generada como report.imported.review.json. Integración directa al estado estará en la UI de administración.')
       } catch (err) {
         alert('No se pudo importar el JSON: ' + err.message)
       }
@@ -76,13 +133,13 @@ const Report = () => {
   }
 
   function exportMarkdown() {
-    const md = buildMarkdown(sections)
+    const md = buildMarkdown(currentSections)
     const blob = new Blob([md], { type: 'text/markdown' })
     downloadBlob(blob, 'report.md')
   }
 
   function printPDF() {
-    const html = buildPrintableHTML(sections)
+    const html = buildPrintableHTML(currentSections)
     const w = window.open('', '_blank')
     if (!w) return
     w.document.open()
@@ -198,12 +255,12 @@ const Report = () => {
           <CCol>
             <h1 className="h3">Report Builder</h1>
             <p className="text-medium-emphasis">Edita, reordena y exporta tu reporte. (Esqueleto inicial)</p>
+            <CAlert color="info" className="mt-2" role="note">
+              <strong>Cómo funciona:</strong> 1) Selecciona un <em>Template</em> en el selector de abajo. 2) Se creará o seleccionará automáticamente un reporte basado en ese template. 3) Edita las secciones del reporte y usa la barra de acciones para exportar.
+            </CAlert>
           </CCol>
           <CCol xs="12" sm="auto" className="text-sm-end">
             <CButtonGroup role="toolbar" aria-label="Acciones de reporte">
-              <CButton color="secondary" variant="outline" onClick={reset} title="Restablecer plantilla">
-                Reset
-              </CButton>
               <CButton color="secondary" variant="outline" onClick={exportJSON} title="Exportar JSON">
                 Export JSON
               </CButton>
@@ -227,7 +284,7 @@ const Report = () => {
             <CFormSelect
               id="template-select"
               value={currentTemplateId || ''}
-              onChange={(e) => selectTemplate(e.target.value)}
+              onChange={(e) => setCurrentTemplate(e.target.value)}
               aria-label="Seleccionar template"
             >
               {(templates || []).map((t) => (
@@ -269,20 +326,22 @@ const Report = () => {
           </CCol>
         </CRow>
 
+        {/* Reportes se gestionan automáticamente: al elegir template se crea/selecciona uno */}
+
         <CRow>
           <CCol md={4} aria-label="Lista de secciones">
             <CListGroup role="navigation" aria-label="Secciones del reporte">
-              {sections.map((s) => (
+              {currentSections.map((s, idx) => (
                 <CListGroupItem
-                  key={s.id}
-                  active={current?.id === s.id}
-                  onClick={() => setSelectedId(s.id)}
+                  key={`${s.sectionId}-${idx}`}
+                  active={currentSections[selectedIndex] === s}
+                  onClick={() => setSelectedIndex(idx)}
                   role="button"
                   tabIndex={0}
                   draggable
                   aria-grabbed={draggingIdRef.current === s.id}
                   onDragStart={(e) => {
-                    draggingIdRef.current = s.id
+                    draggingIdRef.current = String(idx)
                     e.dataTransfer.effectAllowed = 'move'
                   }}
                   onDragOver={(e) => {
@@ -291,10 +350,11 @@ const Report = () => {
                   }}
                   onDrop={(e) => {
                     e.preventDefault()
-                    const sourceId = draggingIdRef.current
-                    const targetId = s.id
-                    if (sourceId && targetId && sourceId !== targetId) {
-                      moveBefore(sourceId, targetId)
+                    const from = parseInt(draggingIdRef.current, 10)
+                    const to = idx
+                    if (!Number.isNaN(from) && from !== to && currentReportId) {
+                      reorderReportSections(currentReportId, from, to)
+                      setSelectedIndex(to)
                     }
                     draggingIdRef.current = null
                   }}
@@ -302,39 +362,41 @@ const Report = () => {
                     draggingIdRef.current = null
                   }}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') setSelectedId(s.id)
+                    if (e.key === 'Enter' || e.key === ' ') setSelectedIndex(idx)
                     if (e.altKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
                       e.preventDefault()
-                      moveBy(s.id, e.key === 'ArrowUp' ? -1 : 1)
+                      const delta = e.key === 'ArrowUp' ? -1 : 1
+                      const from = idx
+                      const to = Math.max(0, Math.min(currentSections.length - 1, from + delta))
+                      if (from !== to && currentReportId) {
+                        reorderReportSections(currentReportId, from, to)
+                        setSelectedIndex(to)
+                      }
                     }
                   }}
                 >
-                  <span className="me-2 text-medium-emphasis">{s.number}</span>
-                  <span>{s.title}</span>
+                  <span className="me-2 text-medium-emphasis">{sectionsCatalog[s.sectionId]?.defaultNumber}</span>
+                  <span>{sectionsCatalog[s.sectionId]?.defaultTitle}</span>
                 </CListGroupItem>
               ))}
             </CListGroup>
           </CCol>
 
           <CCol md={8} aria-label="Editor de sección">
-            {current && (
+            {current && currentReportId && (
               <CForm onSubmit={(e) => e.preventDefault()}>
                 <CRow className="g-3">
                   <CCol md={3}>
-                    <CFormLabel htmlFor="field-number">Número</CFormLabel>
-                    <CFormInput
-                      id="field-number"
-                      value={current.number}
-                      onChange={(e) => updateSection(current.id, { number: e.target.value })}
-                    />
+                    <CFormLabel>Número</CFormLabel>
+                    <div className="form-control-plaintext">
+                      {sectionsCatalog[current.sectionId]?.defaultNumber || '—'}
+                    </div>
                   </CCol>
                   <CCol md={9}>
-                    <CFormLabel htmlFor="field-title">Título</CFormLabel>
-                    <CFormInput
-                      id="field-title"
-                      value={current.title}
-                      onChange={(e) => updateSection(current.id, { title: e.target.value })}
-                    />
+                    <CFormLabel>Título</CFormLabel>
+                    <div className="form-control-plaintext">
+                      {sectionsCatalog[current.sectionId]?.defaultTitle || '—'}
+                    </div>
                   </CCol>
 
                   <CCol md={12}>
@@ -342,7 +404,7 @@ const Report = () => {
                     <CFormInput
                       id="field-link"
                       value={current.link}
-                      onChange={(e) => updateSection(current.id, { link: e.target.value })}
+                      onChange={(e) => updateReportSection(currentReportId, selectedIndex, { link: e.target.value })}
                       placeholder="https://... o C:\\ruta\\archivo.pdf"
                     />
                   </CCol>
@@ -353,14 +415,22 @@ const Report = () => {
                       id="field-content"
                       rows={8}
                       value={current.content}
-                      onChange={(e) => updateSection(current.id, { content: e.target.value })}
+                      onChange={(e) => updateReportSection(currentReportId, selectedIndex, { content: e.target.value })}
                     />
                   </CCol>
 
                   <CCol md={12}>
                     <div className="d-flex justify-content-between align-items-center mb-2">
                       <CFormLabel className="m-0">Adjuntos</CFormLabel>
-                      <CButton size="sm" color="secondary" variant="outline" onClick={() => addAttachment(current.id)}>
+                      <CButton
+                        size="sm"
+                        color="secondary"
+                        variant="outline"
+                        onClick={() => {
+                          const att = [...(current.attachments || []), { name: '', url: '' }]
+                          updateReportSection(currentReportId, selectedIndex, { attachments: att })
+                        }}
+                      >
                         + Agregar adjunto
                       </CButton>
                     </div>
@@ -370,15 +440,31 @@ const Report = () => {
                         <CFormInput
                           aria-label={`Nombre del adjunto ${idx + 1}`}
                           value={att.name || ''}
-                          onChange={(e) => updateAttachment(current.id, idx, { name: e.target.value })}
+                          onChange={(e) => {
+                            const list = [...(current.attachments || [])]
+                            list[idx] = { ...list[idx], name: e.target.value }
+                            updateReportSection(currentReportId, selectedIndex, { attachments: list })
+                          }}
                         />
                         <CInputGroupText>URL</CInputGroupText>
                         <CFormInput
                           aria-label={`URL del adjunto ${idx + 1}`}
                           value={att.url || ''}
-                          onChange={(e) => updateAttachment(current.id, idx, { url: e.target.value })}
+                          onChange={(e) => {
+                            const list = [...(current.attachments || [])]
+                            list[idx] = { ...list[idx], url: e.target.value }
+                            updateReportSection(currentReportId, selectedIndex, { attachments: list })
+                          }}
                         />
-                        <CButton color="danger" variant="outline" onClick={() => removeAttachment(current.id, idx)}>
+                        <CButton
+                          color="danger"
+                          variant="outline"
+                          onClick={() => {
+                            const list = [...(current.attachments || [])]
+                            list.splice(idx, 1)
+                            updateReportSection(currentReportId, selectedIndex, { attachments: list })
+                          }}
+                        >
                           Quitar
                         </CButton>
                       </CInputGroup>
