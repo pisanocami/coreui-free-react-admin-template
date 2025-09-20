@@ -16,9 +16,9 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Import the database client and the specific table we need
+// Import the database client and the specific tables we need
 import { db } from './src/db/index.js';
-import { client } from './drizzle/schema.js';
+import { client, report } from './drizzle/schema.js';
 
 app.get('/api/clients', async (req, res) => {
   try {
@@ -58,6 +58,50 @@ app.post('/api/clients', async (req, res) => {
   } catch (error) {
     console.error('Error creating client:', error);
     res.status(500).json({ error: 'Failed to create client' });
+  }
+});
+
+// Reports endpoints
+app.get('/api/reports', async (req, res) => {
+  try {
+    console.log('Fetching reports from the database...');
+    const reports = await db.select().from(report).limit(10);
+    console.log(`Found ${reports.length} reports.`);
+    res.json(reports);
+  } catch (error) {
+    console.error('Error fetching reports:', error);
+    res.status(500).json({ error: 'Failed to fetch reports' });
+  }
+});
+
+app.post('/api/reports', async (req, res) => {
+  try {
+    const { name, summary, clientid, verticalid, createdbyuserid, status } = req.body;
+
+    // Basic validation
+    if (!name) {
+      return res.status(400).json({ error: 'Name is required' });
+    }
+
+    console.log('Creating new report:', { name, summary, clientid });
+
+    const newReport = await db
+      .insert(report)
+      .values({
+        name,
+        summary,
+        clientid,
+        verticalid,
+        createdbyuserid,
+        status: status || 'draft', // Default status
+      })
+      .returning(); // Return the newly created record
+
+    console.log('Report created successfully:', newReport[0]);
+    res.status(201).json(newReport[0]);
+  } catch (error) {
+    console.error('Error creating report:', error);
+    res.status(500).json({ error: 'Failed to create report' });
   }
 });
 

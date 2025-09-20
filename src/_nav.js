@@ -32,9 +32,13 @@ const _nav = [
     icon: <CIcon icon={cilPeople} customClassName="nav-icon" />,
   },
   {
-    // --> ADD NEW NAVIGATION ITEMS HERE <--
-    // See README_NEON.md, section '3. Crear la Página en el Frontend' for instructions.
+    component: CNavItem,
+    name: 'Reports',
+    to: '/reports',
+    icon: <CIcon icon={cilNotes} customClassName="nav-icon" />,
   },
+  // --> ADD NEW NAVIGATION ITEMS HERE <--
+  // See README_NEON.md, section '3. Crear la Página en el Frontend' for instructions.
   {
     component: CNavItem,
     name: 'Perfil',
