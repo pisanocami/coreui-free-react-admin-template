@@ -12,6 +12,7 @@
   },
   "license": "MIT",
   "author": "The CoreUI Team (https://github.com/orgs/coreui/people)",
+  "type": "module",
   "scripts": {
     "build": "vite build",
     "db:introspect": "drizzle-kit introspect",

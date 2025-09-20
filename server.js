@@ -9,8 +9,8 @@ app.get('/api/health', (req, res) => {
 });
 
 // Import the database client and the specific table we need
-import { db } from '../src/db/index.js';
-import { client } from '../drizzle/schema.js';
+import { db } from './src/db/index.js';
+import { client } from './drizzle/schema.js';
 
 app.get('/api/clients', async (req, res) => {
   try {
