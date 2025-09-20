@@ -8,6 +8,15 @@ export default defineConfig(() => {
     base: './',
     build: {
       outDir: 'build',
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            vendor: ['react', 'react-dom', 'react-router-dom'],
+            ui: ['@coreui/react', '@coreui/coreui', '@coreui/icons-react'],
+            charts: ['chart.js', '@coreui/chartjs'],
+          },
+        },
+      },
     },
     css: {
       postcss: {
@@ -40,10 +49,19 @@ export default defineConfig(() => {
       extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json', '.scss'],
     },
     server: {
-      host: '0.0.0.0',
-      port: 5000,
-      hmr: {
-        clientPort: 443,
+      port: 3000,
+      // Allow all external hosts (disables host checking)
+      allowedHosts: true,
+      // Security headers
+      headers: {
+        'X-Frame-Options': 'DENY',
+        'X-Content-Type-Options': 'nosniff',
+        'X-XSS-Protection': '1; mode=block',
+        'Referrer-Policy': 'strict-origin-when-cross-origin',
+        'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+        'Cross-Origin-Embedder-Policy': 'require-corp',
+        'Cross-Origin-Opener-Policy': 'same-origin',
+        'Cross-Origin-Resource-Policy': 'cross-origin'
       },
       proxy: {
         // https://vitejs.dev/config/server-options.html
