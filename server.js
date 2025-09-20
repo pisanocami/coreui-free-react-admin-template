@@ -1,5 +1,10 @@
 import 'dotenv/config';
 import express from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -56,7 +61,19 @@ app.post('/api/clients', async (req, res) => {
   }
 });
 
-// Aquí agregaremos más endpoints para tus entidades
+// --- Production-only: Serve static files from React build ---
+if (process.env.NODE_ENV === 'production') {
+  // Serve static files from the 'build' directory
+  app.use(express.static('build'));
+
+  // For any other request, serve the index.html file
+  app.get('*', (req, res) => {
+    res.sendFile(path.resolve(__dirname, 'build', 'index.html'));
+  });
+}
+
+// --> ADD NEW API ENDPOINTS HERE <--
+// See README_NEON.md, section '2. Añadir el Endpoint en el Backend' for instructions.
 
 app.listen(port, () => {
   console.log(`API server listening on port ${port}`);

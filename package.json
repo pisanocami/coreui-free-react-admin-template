@@ -18,7 +18,7 @@
     "db:introspect": "drizzle-kit introspect",
     "lint": "eslint",
     "serve": "vite preview",
-    "start": "vite"
+    "start": "node server.js"
   },
   "dependencies": {
     "@coreui/chartjs": "^4.1.0",

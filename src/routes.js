@@ -29,6 +29,8 @@ const routes = [
   { path: '/sections', name: 'Sections Admin', element: SectionsAdmin },
   { path: '/admin/mock-reports', name: 'Mock Reports', element: AdminMockReports },
   { path: '/clients', name: 'Clients', element: Clients },
+  // --> ADD NEW PAGE ROUTES HERE <--
+  // See README_NEON.md, section '3. Crear la Página en el Frontend' for instructions.
 ]
 
 export default routes
