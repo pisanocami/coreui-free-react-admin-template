@@ -524,6 +524,17 @@ const Report = () => {
               >
                 Eliminar
               </CButton>
+              <CButton
+                color="primary"
+                onClick={() => {
+                  if (!currentTemplateId) return
+                  const suggested = `Reporte de ${currentTemplate?.name || 'Template'}`
+                  const name = prompt('Nombre del nuevo reporte', suggested) || suggested
+                  createReport(currentTemplateId, name)
+                }}
+              >
+                Crear reporte
+              </CButton>
             </CCol>
           </CRow>
         )}
