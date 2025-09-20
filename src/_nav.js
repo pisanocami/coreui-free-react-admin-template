@@ -30,8 +30,6 @@ const _nav = [
     to: '/profile',
     icon: <CIcon icon={cilStar} customClassName="nav-icon" />,
   },
-  // Administración (siempre visible)
-  { component: CNavTitle, name: 'Administración' },
   {
     component: CNavItem,
     name: 'Plantillas',
