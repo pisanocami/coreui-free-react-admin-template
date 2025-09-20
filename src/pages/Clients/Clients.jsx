@@ -19,154 +19,271 @@ import {
   CModalFooter,
   CForm,
   CFormInput,
-  CFormLabel,
+  CPagination,
+  CPaginationItem,
 } from '@coreui/react';
 
 const Clients = () => {
   const [clients, setClients] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [isModalVisible, setModalVisible] = useState(false);
-  const [newClient, setNewClient] = useState({ name: '', industry: '', maincontact: '' });
+  const [visible, setVisible] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [currentClient, setCurrentClient] = useState({ name: '', industry: '', region: '' });
+  
+  // Estados para la paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+  
+  // Estados para la búsqueda
+  const [searchTerm, setSearchTerm] = useState('');
+  
+  // Estados para el ordenamiento
+  const [sortConfig, setSortConfig] = useState({ key: 'clientid', direction: 'ascending' });
+
+  const fetchClients = () => {
+    fetch('/api/clients')
+      .then((response) => response.json())
+      .then((data) => setClients(data))
+      .catch((error) => console.error('Error fetching clients:', error));
+  };
+  
+  // Función para ordenar los clientes
+  const sortedClients = React.useMemo(() => {
+    const sortableItems = [...clients];
+    if (sortConfig !== null) {
+      sortableItems.sort((a, b) => {
+        if (a[sortConfig.key] < b[sortConfig.key]) {
+          return sortConfig.direction === 'ascending' ? -1 : 1;
+        }
+        if (a[sortConfig.key] > b[sortConfig.key]) {
+          return sortConfig.direction === 'ascending' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    return sortableItems;
+  }, [clients, sortConfig]);
+  
+  // Función para filtrar los clientes según el término de búsqueda
+  const filteredClients = React.useMemo(() => {
+    return sortedClients.filter(client => 
+      client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      client.industry.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      client.region.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [sortedClients, searchTerm]);
+  
+  // Función para obtener los clientes paginados
+  const paginatedClients = React.useMemo(() => {
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    return filteredClients.slice(indexOfFirstItem, indexOfLastItem);
+  }, [filteredClients, currentPage, itemsPerPage]);
+  
+  // Función para cambiar la página
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+  
+  // Función para ordenar por columna
+  const requestSort = (key) => {
+    let direction = 'ascending';
+    if (sortConfig.key === key && sortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    setSortConfig({ key, direction });
+  };
 
   useEffect(() => {
-    const fetchClients = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch('/api/clients');
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        setClients(data);
-      } catch (e) {
-        setError(e.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchClients();
-  }, []); // Empty dependency array means this effect runs once on mount
+  }, []);
 
-  const handleSaveClient = async () => {
-    try {
-      const response = await fetch('/api/clients', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(newClient),
-      });
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setCurrentClient({ ...currentClient, [name]: value });
+  };
 
-      if (!response.ok) {
-        throw new Error('Failed to create client');
-      }
+  const handleSaveClient = () => {
+    const method = isEditMode ? 'PUT' : 'POST';
+    const url = isEditMode ? `/api/clients/${currentClient.clientid}` : '/api/clients';
 
-      const createdClient = await response.json();
+    fetch(url, {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(currentClient),
+    })
+      .then((response) => {
+        if (!response.ok) {
+          return response.json().then(err => { throw new Error(err.error) });
+        }
+        return response.status === 204 ? null : response.json();
+      })
+      .then(() => {
+        fetchClients();
+        setVisible(false);
+      })
+      .catch((error) => console.error(`Error ${isEditMode ? 'updating' : 'adding'} client:`, error.message));
+  };
 
-      // Add the new client to the top of the list
-      setClients([createdClient, ...clients]);
+  const openModalForCreate = () => {
+    setIsEditMode(false);
+    setCurrentClient({ name: '', industry: '', region: '' });
+    setVisible(true);
+  };
 
-      // Reset form and close modal
-      setNewClient({ name: '', industry: '', maincontact: '' });
-      setModalVisible(false);
+  const openModalForEdit = (client) => {
+    setIsEditMode(true);
+    setCurrentClient(client);
+    setVisible(true);
+  };
 
-    } catch (e) {
-      // You might want to show this error in the modal
-      setError(e.message);
-      console.error('Save client error:', e);
+  const handleDeleteClient = (clientid) => {
+    if (window.confirm('Are you sure you want to delete this client?')) {
+      fetch(`/api/clients/${clientid}`, {
+        method: 'DELETE',
+      })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Failed to delete client');
+          }
+          fetchClients();
+        })
+        .catch(error => console.error('Error deleting client:', error.message));
     }
   };
 
   return (
     <>
       <CRow>
-      <CCol xs={12}>
-        <CCard className="mb-4">
-          <CCardHeader>
-            <div className="d-flex justify-content-between align-items-center">
-              <span>
-                <strong>Clients</strong> <small>from Neon DB</small>
-              </span>
-              <CButton color="primary" onClick={() => setModalVisible(true)} >
-                Add Client
-              </CButton>
-            </div>
-          </CCardHeader>
-          <CCardBody>
-            {loading && <p>Loading clients...</p>}
-            {error && <p style={{ color: 'red' }}>Error fetching clients: {error}</p>}
-            {!loading && !error && (
+        <CCol xs={12}>
+          <CCard className="mb-4">
+            <CCardHeader>
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <strong>Clients</strong>
+                <CButton color="primary" onClick={openModalForCreate}>
+                  Add Client
+                </CButton>
+              </div>
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <CFormInput
+                  type="text"
+                  placeholder="Buscar clientes..."
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setCurrentPage(1); // Resetear a la primera página cuando se busca
+                  }}
+                  className="w-50"
+                />
+              </div>
+            </CCardHeader>
+            <CCardBody>
               <CTable hover>
                 <CTableHead>
                   <CTableRow>
-                    <CTableHeaderCell scope="col"># ID</CTableHeaderCell>
-                    <CTableHeaderCell scope="col">Name</CTableHeaderCell>
-                    <CTableHeaderCell scope="col">Industry</CTableHeaderCell>
-                    <CTableHeaderCell scope="col">Status</CTableHeaderCell>
+                    <CTableHeaderCell 
+                      onClick={() => requestSort('clientid')}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      ID {sortConfig.key === 'clientid' ? (sortConfig.direction === 'ascending' ? '↑' : '↓') : ''}
+                    </CTableHeaderCell>
+                    <CTableHeaderCell 
+                      onClick={() => requestSort('name')}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      Name {sortConfig.key === 'name' ? (sortConfig.direction === 'ascending' ? '↑' : '↓') : ''}
+                    </CTableHeaderCell>
+                    <CTableHeaderCell 
+                      onClick={() => requestSort('industry')}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      Industry {sortConfig.key === 'industry' ? (sortConfig.direction === 'ascending' ? '↑' : '↓') : ''}
+                    </CTableHeaderCell>
+                    <CTableHeaderCell 
+                      onClick={() => requestSort('region')}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      Region {sortConfig.key === 'region' ? (sortConfig.direction === 'ascending' ? '↑' : '↓') : ''}
+                    </CTableHeaderCell>
+                    <CTableHeaderCell>Actions</CTableHeaderCell>
                   </CTableRow>
                 </CTableHead>
                 <CTableBody>
-                  {clients.map((client) => (
+                  {paginatedClients.map((client) => (
                     <CTableRow key={client.clientid}>
-                      <CTableHeaderCell scope="row">{client.clientid}</CTableHeaderCell>
+                      <CTableDataCell>{client.clientid}</CTableDataCell>
                       <CTableDataCell>{client.name}</CTableDataCell>
                       <CTableDataCell>{client.industry}</CTableDataCell>
-                      <CTableDataCell>{client.status}</CTableDataCell>
+                      <CTableDataCell>{client.region}</CTableDataCell>
+                      <CTableDataCell>
+                        <CButton color="light" size="sm" onClick={() => openModalForEdit(client)} className="me-2">
+                          Edit
+                        </CButton>
+                        <CButton color="danger" size="sm" onClick={() => handleDeleteClient(client.clientid)}>
+                          Delete
+                        </CButton>
+                      </CTableDataCell>
                     </CTableRow>
                   ))}
                 </CTableBody>
               </CTable>
-            )}
-             {clients.length === 0 && !loading && <p>No clients found.</p>}
-          </CCardBody>
-        </CCard>
-      </CCol>
-    </CRow>
+              
+              {/* Paginación */}
+              <CPagination align="center" className="mt-3">
+                {[...Array(Math.ceil(filteredClients.length / itemsPerPage)).keys()].map(number => (
+                  <CPaginationItem 
+                    key={number + 1} 
+                    active={number + 1 === currentPage}
+                    onClick={() => paginate(number + 1)}
+                  >
+                    {number + 1}
+                  </CPaginationItem>
+                ))}
+              </CPagination>
+            </CCardBody>
+          </CCard>
+        </CCol>
+      </CRow>
 
-    <CModal visible={isModalVisible} onClose={() => setModalVisible(false)}>
-      <CModalHeader onClose={() => setModalVisible(false)}>
-        <CModalTitle>Add New Client</CModalTitle>
-      </CModalHeader>
-      <CModalBody>
-        <CForm>
-          <div className="mb-3">
-            <CFormLabel htmlFor="clientName">Name</CFormLabel>
+      <CModal visible={visible} onClose={() => setVisible(false)}>
+        <CModalHeader>
+          <CModalTitle>{isEditMode ? 'Edit Client' : 'Add New Client'}</CModalTitle>
+        </CModalHeader>
+        <CModalBody>
+          <CForm>
             <CFormInput
               type="text"
-              id="clientName"
-              value={newClient.name}
-              onChange={(e) => setNewClient({ ...newClient, name: e.target.value })}
+              name="name"
+              label="Name"
+              value={currentClient.name || ''}
+              onChange={handleInputChange}
+              className="mb-3"
             />
-          </div>
-          <div className="mb-3">
-            <CFormLabel htmlFor="clientIndustry">Industry</CFormLabel>
             <CFormInput
               type="text"
-              id="clientIndustry"
-              value={newClient.industry}
-              onChange={(e) => setNewClient({ ...newClient, industry: e.target.value })}
+              name="industry"
+              label="Industry"
+              value={currentClient.industry || ''}
+              onChange={handleInputChange}
+              className="mb-3"
             />
-          </div>
-          <div className="mb-3">
-            <CFormLabel htmlFor="clientContact">Main Contact</CFormLabel>
             <CFormInput
               type="text"
-              id="clientContact"
-              value={newClient.maincontact}
-              onChange={(e) => setNewClient({ ...newClient, maincontact: e.target.value })}
+              name="region"
+              label="Region"
+              value={currentClient.region || ''}
+              onChange={handleInputChange}
             />
-          </div>
-        </CForm>
-      </CModalBody>
-      <CModalFooter>
-        <CButton color="secondary" onClick={() => setModalVisible(false)}>
-          Cancel
-        </CButton>
-        <CButton color="primary" onClick={handleSaveClient}>Save Client</CButton>
-      </CModalFooter>
-    </CModal>
+          </CForm>
+        </CModalBody>
+        <CModalFooter>
+          <CButton color="secondary" onClick={() => setVisible(false)}>
+            Close
+          </CButton>
+          <CButton color="primary" onClick={handleSaveClient}>
+            {isEditMode ? 'Update Client' : 'Save Client'}
+          </CButton>
+        </CModalFooter>
+      </CModal>
     </>
   );
 };

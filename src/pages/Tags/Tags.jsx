@@ -20,42 +20,81 @@ import {
 const Tags = () => {
   const [tags, setTags] = useState([])
   const [visible, setVisible] = useState(false)
-  const [newTag, setNewTag] = useState({ name: '', category: '', description: '' })
+  const [isEditMode, setIsEditMode] = useState(false)
+  const [currentTag, setCurrentTag] = useState({ name: '', description: '' })
 
-  useEffect(() => {
+  const fetchTags = () => {
     fetch('/api/tags')
       .then((response) => response.json())
       .then((data) => setTags(data))
       .catch((error) => console.error('Error fetching tags:', error))
+  }
+
+  useEffect(() => {
+    fetchTags()
   }, [])
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
-    setNewTag({ ...newTag, [name]: value })
+    setCurrentTag({ ...currentTag, [name]: value })
   }
 
-  const handleAddTag = () => {
-    fetch('/api/tags', {
-      method: 'POST',
+  const handleSaveTag = () => {
+    const method = isEditMode ? 'PUT' : 'POST'
+    const url = isEditMode ? `/api/tags/${currentTag.tagid}` : '/api/tags'
+
+    fetch(url, {
+      method,
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(newTag),
+      body: JSON.stringify(currentTag),
     })
-      .then((response) => response.json())
-      .then((addedTag) => {
-        setTags([...tags, addedTag])
-        setVisible(false)
-        setNewTag({ name: '', category: '', description: '' })
+      .then((response) => {
+        if (!response.ok) {
+          return response.json().then(err => { throw new Error(err.error) })
+        }
+        return response.status === 204 ? null : response.json()
       })
-      .catch((error) => console.error('Error adding tag:', error))
+      .then(() => {
+        fetchTags()
+        setVisible(false)
+      })
+      .catch((error) => console.error(`Error ${isEditMode ? 'updating' : 'adding'} tag:`, error.message))
+  }
+
+  const openModalForCreate = () => {
+    setIsEditMode(false)
+    setCurrentTag({ name: '', description: '' })
+    setVisible(true)
+  }
+
+  const openModalForEdit = (tag) => {
+    setIsEditMode(true)
+    setCurrentTag(tag)
+    setVisible(true)
+  }
+
+  const handleDeleteTag = (tagid) => {
+    if (window.confirm('Are you sure you want to delete this tag?')) {
+      fetch(`/api/tags/${tagid}`, {
+        method: 'DELETE',
+      })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Failed to delete tag')
+          }
+          fetchTags()
+        })
+        .catch(error => console.error('Error deleting tag:', error.message))
+    }
   }
 
   return (
     <CContainer>
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h1>Tags</h1>
-        <CButton color="primary" onClick={() => setVisible(!visible)}>
+        <CButton color="primary" onClick={openModalForCreate}>
           Add Tag
         </CButton>
       </div>
@@ -64,8 +103,8 @@ const Tags = () => {
           <CTableRow>
             <CTableHeaderCell>ID</CTableHeaderCell>
             <CTableHeaderCell>Name</CTableHeaderCell>
-            <CTableHeaderCell>Category</CTableHeaderCell>
             <CTableHeaderCell>Description</CTableHeaderCell>
+            <CTableHeaderCell>Actions</CTableHeaderCell>
           </CTableRow>
         </CTableHead>
         <CTableBody>
@@ -73,8 +112,15 @@ const Tags = () => {
             <CTableRow key={tag.tagid}>
               <CTableDataCell>{tag.tagid}</CTableDataCell>
               <CTableDataCell>{tag.name}</CTableDataCell>
-              <CTableDataCell>{tag.category}</CTableDataCell>
               <CTableDataCell>{tag.description}</CTableDataCell>
+              <CTableDataCell>
+                <CButton color="light" size="sm" onClick={() => openModalForEdit(tag)} className="me-2">
+                  Edit
+                </CButton>
+                <CButton color="danger" size="sm" onClick={() => handleDeleteTag(tag.tagid)}>
+                  Delete
+                </CButton>
+              </CTableDataCell>
             </CTableRow>
           ))}
         </CTableBody>
@@ -82,7 +128,7 @@ const Tags = () => {
 
       <CModal visible={visible} onClose={() => setVisible(false)}>
         <CModalHeader>
-          <CModalTitle>Add New Tag</CModalTitle>
+          <CModalTitle>{isEditMode ? 'Edit Tag' : 'Add New Tag'}</CModalTitle>
         </CModalHeader>
         <CModalBody>
           <CForm>
@@ -90,17 +136,7 @@ const Tags = () => {
               type="text"
               name="name"
               label="Name"
-              placeholder="Enter tag name"
-              value={newTag.name}
-              onChange={handleInputChange}
-              className="mb-3"
-            />
-            <CFormInput
-              type="text"
-              name="category"
-              label="Category"
-              placeholder="Enter category"
-              value={newTag.category}
+              value={currentTag.name || ''}
               onChange={handleInputChange}
               className="mb-3"
             />
@@ -108,8 +144,7 @@ const Tags = () => {
               type="text"
               name="description"
               label="Description"
-              placeholder="Enter description"
-              value={newTag.description}
+              value={currentTag.description || ''}
               onChange={handleInputChange}
             />
           </CForm>
@@ -118,8 +153,8 @@ const Tags = () => {
           <CButton color="secondary" onClick={() => setVisible(false)}>
             Close
           </CButton>
-          <CButton color="primary" onClick={handleAddTag}>
-            Save Tag
+          <CButton color="primary" onClick={handleSaveTag}>
+            {isEditMode ? 'Update Tag' : 'Save Tag'}
           </CButton>
         </CModalFooter>
       </CModal>

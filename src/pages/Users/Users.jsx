@@ -15,47 +15,87 @@ import {
   CModalFooter,
   CForm,
   CFormInput,
+  CFormSelect,
 } from '@coreui/react'
 
 const Users = () => {
   const [users, setUsers] = useState([])
   const [visible, setVisible] = useState(false)
-  const [newUser, setNewUser] = useState({ name: '', email: '', role: '', status: 'active' })
+  const [isEditMode, setIsEditMode] = useState(false)
+  const [currentUser, setCurrentUser] = useState({ name: '', email: '', role: 'user', status: 'active' })
 
-  useEffect(() => {
+  const fetchUsers = () => {
     fetch('/api/users')
       .then((response) => response.json())
       .then((data) => setUsers(data))
       .catch((error) => console.error('Error fetching users:', error))
+  }
+
+  useEffect(() => {
+    fetchUsers()
   }, [])
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
-    setNewUser({ ...newUser, [name]: value })
+    setCurrentUser({ ...currentUser, [name]: value })
   }
 
-  const handleAddUser = () => {
-    fetch('/api/users', {
-      method: 'POST',
+  const handleSaveUser = () => {
+    const method = isEditMode ? 'PUT' : 'POST'
+    const url = isEditMode ? `/api/users/${currentUser.userid}` : '/api/users'
+
+    fetch(url, {
+      method,
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(newUser),
+      body: JSON.stringify(currentUser),
     })
-      .then((response) => response.json())
-      .then((addedUser) => {
-        setUsers([...users, addedUser])
-        setVisible(false)
-        setNewUser({ name: '', email: '', role: '', status: 'active' })
+      .then((response) => {
+        if (!response.ok) {
+          return response.json().then(err => { throw new Error(err.error) })
+        }
+        return response.status === 204 ? null : response.json()
       })
-      .catch((error) => console.error('Error adding user:', error))
+      .then(() => {
+        fetchUsers()
+        setVisible(false)
+      })
+      .catch((error) => console.error(`Error ${isEditMode ? 'updating' : 'adding'} user:`, error.message))
+  }
+
+  const openModalForCreate = () => {
+    setIsEditMode(false)
+    setCurrentUser({ name: '', email: '', role: 'user', status: 'active' })
+    setVisible(true)
+  }
+
+  const openModalForEdit = (user) => {
+    setIsEditMode(true)
+    setCurrentUser(user)
+    setVisible(true)
+  }
+
+  const handleDeleteUser = (userid) => {
+    if (window.confirm('Are you sure you want to delete this user?')) {
+      fetch(`/api/users/${userid}`, {
+        method: 'DELETE',
+      })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Failed to delete user')
+          }
+          fetchUsers()
+        })
+        .catch(error => console.error('Error deleting user:', error.message))
+    }
   }
 
   return (
     <CContainer>
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h1>Users</h1>
-        <CButton color="primary" onClick={() => setVisible(!visible)}>
+        <CButton color="primary" onClick={openModalForCreate}>
           Add User
         </CButton>
       </div>
@@ -67,6 +107,7 @@ const Users = () => {
             <CTableHeaderCell>Email</CTableHeaderCell>
             <CTableHeaderCell>Role</CTableHeaderCell>
             <CTableHeaderCell>Status</CTableHeaderCell>
+            <CTableHeaderCell>Actions</CTableHeaderCell>
           </CTableRow>
         </CTableHead>
         <CTableBody>
@@ -77,6 +118,14 @@ const Users = () => {
               <CTableDataCell>{user.email}</CTableDataCell>
               <CTableDataCell>{user.role}</CTableDataCell>
               <CTableDataCell>{user.status}</CTableDataCell>
+              <CTableDataCell>
+                <CButton color="light" size="sm" onClick={() => openModalForEdit(user)} className="me-2">
+                  Edit
+                </CButton>
+                <CButton color="danger" size="sm" onClick={() => handleDeleteUser(user.userid)}>
+                  Delete
+                </CButton>
+              </CTableDataCell>
             </CTableRow>
           ))}
         </CTableBody>
@@ -84,7 +133,7 @@ const Users = () => {
 
       <CModal visible={visible} onClose={() => setVisible(false)}>
         <CModalHeader>
-          <CModalTitle>Add New User</CModalTitle>
+          <CModalTitle>{isEditMode ? 'Edit User' : 'Add New User'}</CModalTitle>
         </CModalHeader>
         <CModalBody>
           <CForm>
@@ -92,8 +141,7 @@ const Users = () => {
               type="text"
               name="name"
               label="Name"
-              placeholder="Enter user name"
-              value={newUser.name}
+              value={currentUser.name || ''}
               onChange={handleInputChange}
               className="mb-3"
             />
@@ -101,36 +149,37 @@ const Users = () => {
               type="email"
               name="email"
               label="Email"
-              placeholder="Enter email"
-              value={newUser.email}
+              value={currentUser.email || ''}
               onChange={handleInputChange}
               className="mb-3"
             />
-            <CFormInput
-              type="text"
+            <CFormSelect
               name="role"
               label="Role"
-              placeholder="Enter role"
-              value={newUser.role}
+              value={currentUser.role || 'user'}
               onChange={handleInputChange}
               className="mb-3"
-            />
-             <CFormInput
-              type="text"
+            >
+              <option value="user">User</option>
+              <option value="admin">Admin</option>
+            </CFormSelect>
+            <CFormSelect
               name="status"
               label="Status"
-              placeholder="Enter status"
-              value={newUser.status}
+              value={currentUser.status || 'active'}
               onChange={handleInputChange}
-            />
+            >
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </CFormSelect>
           </CForm>
         </CModalBody>
         <CModalFooter>
           <CButton color="secondary" onClick={() => setVisible(false)}>
             Close
           </CButton>
-          <CButton color="primary" onClick={handleAddUser}>
-            Save User
+          <CButton color="primary" onClick={handleSaveUser}>
+            {isEditMode ? 'Update User' : 'Save User'}
           </CButton>
         </CModalFooter>
       </CModal>

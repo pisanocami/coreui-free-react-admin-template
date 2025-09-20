@@ -22,61 +22,82 @@ const ReportSections = () => {
   const [sections, setSections] = useState([])
   const [reports, setReports] = useState([])
   const [visible, setVisible] = useState(false)
-  const [newSection, setNewSection] = useState({
-    reportid: '',
-    sectionname: '',
-    position: '',
-    description: '',
-  })
+  const [isEditMode, setIsEditMode] = useState(false)
+  const [currentSection, setCurrentSection] = useState({ reportid: '', sectionname: '', position: '', description: '' })
+
+  const fetchSections = () => {
+    fetch('/api/reportsections')
+      .then((response) => response.json())
+      .then((data) => setSections(data))
+      .catch((error) => console.error('Error fetching report sections:', error))
+  }
+
+  const fetchReports = () => {
+    fetch('/api/reports')
+      .then((response) => response.json())
+      .then((data) => setReports(data))
+      .catch((error) => console.error('Error fetching reports:', error))
+  }
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [sectionsRes, reportsRes] = await Promise.all([
-          fetch('/api/reportsections'),
-          fetch('/api/reports'),
-        ])
-        const sectionsData = await sectionsRes.json()
-        const reportsData = await reportsRes.json()
-        setSections(sectionsData)
-        setReports(reportsData)
-      } catch (error) {
-        console.error('Error fetching data:', error)
-      }
-    }
-    fetchData()
+    fetchSections()
+    fetchReports()
   }, [])
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
-    setNewSection({ ...newSection, [name]: value })
+    setCurrentSection({ ...currentSection, [name]: value })
   }
 
-  const handleAddSection = () => {
-    const sectionData = {
-      ...newSection,
-      reportid: parseInt(newSection.reportid, 10),
-      position: newSection.position ? parseInt(newSection.position, 10) : null,
-    }
+  const handleSaveSection = () => {
+    const method = isEditMode ? 'PUT' : 'POST'
+    const url = isEditMode ? `/api/reportsections/${currentSection.sectionid}` : '/api/reportsections'
 
-    fetch('/api/reportsections', {
-      method: 'POST',
+    fetch(url, {
+      method,
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(sectionData),
+      body: JSON.stringify(currentSection),
     })
-      .then((response) => response.json())
-      .then((addedSection) => {
-        if (addedSection.error) {
-          alert(`Error: ${addedSection.error}`)
-        } else {
-          fetch('/api/reportsections').then((res) => res.json()).then(setSections)
-          setVisible(false)
-          setNewSection({ reportid: '', sectionname: '', position: '', description: '' })
+      .then((response) => {
+        if (!response.ok) {
+          return response.json().then(err => { throw new Error(err.error) })
         }
+        return response.status === 204 ? null : response.json()
       })
-      .catch((error) => console.error('Error adding report section:', error))
+      .then(() => {
+        fetchSections()
+        setVisible(false)
+      })
+      .catch((error) => console.error(`Error ${isEditMode ? 'updating' : 'adding'} report section:`, error.message))
+  }
+
+  const openModalForCreate = () => {
+    setIsEditMode(false)
+    setCurrentSection({ reportid: '', sectionname: '', position: '', description: '' })
+    setVisible(true)
+  }
+
+  const openModalForEdit = (section) => {
+    setIsEditMode(true)
+    setCurrentSection(section)
+    setVisible(true)
+  }
+
+  const handleDeleteSection = (sectionid) => {
+    if (window.confirm('Are you sure you want to delete this report section?')) {
+      fetch(`/api/reportsections/${sectionid}`, {
+        method: 'DELETE',
+      })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Failed to delete report section')
+          }
+          fetchSections()
+        })
+        .catch(error => console.error('Error deleting report section:', error.message))
+    }
   }
 
   const reportNameMap = reports.reduce((acc, report) => ({ ...acc, [report.reportid]: report.name }), {})
@@ -85,7 +106,7 @@ const ReportSections = () => {
     <CContainer>
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h1>Report Sections</h1>
-        <CButton color="primary" onClick={() => setVisible(!visible)}>
+        <CButton color="primary" onClick={openModalForCreate}>
           Add Report Section
         </CButton>
       </div>
@@ -96,6 +117,7 @@ const ReportSections = () => {
             <CTableHeaderCell>Section Name</CTableHeaderCell>
             <CTableHeaderCell>Report</CTableHeaderCell>
             <CTableHeaderCell>Position</CTableHeaderCell>
+            <CTableHeaderCell>Actions</CTableHeaderCell>
           </CTableRow>
         </CTableHead>
         <CTableBody>
@@ -105,6 +127,14 @@ const ReportSections = () => {
               <CTableDataCell>{section.sectionname}</CTableDataCell>
               <CTableDataCell>{reportNameMap[section.reportid] || section.reportid}</CTableDataCell>
               <CTableDataCell>{section.position}</CTableDataCell>
+              <CTableDataCell>
+                <CButton color="light" size="sm" onClick={() => openModalForEdit(section)} className="me-2">
+                  Edit
+                </CButton>
+                <CButton color="danger" size="sm" onClick={() => handleDeleteSection(section.sectionid)}>
+                  Delete
+                </CButton>
+              </CTableDataCell>
             </CTableRow>
           ))}
         </CTableBody>
@@ -112,22 +142,22 @@ const ReportSections = () => {
 
       <CModal visible={visible} onClose={() => setVisible(false)} size="lg">
         <CModalHeader>
-          <CModalTitle>Add New Report Section</CModalTitle>
+          <CModalTitle>{isEditMode ? 'Edit Report Section' : 'Add New Report Section'}</CModalTitle>
         </CModalHeader>
         <CModalBody>
           <CForm>
-            <CFormSelect name="reportid" label="Report" value={newSection.reportid} onChange={handleInputChange} className="mb-3">
+            <CFormSelect name="reportid" label="Report" value={currentSection.reportid || ''} onChange={handleInputChange} className="mb-3">
               <option>Select Report</option>
               {reports.map((r) => (<option key={r.reportid} value={r.reportid}>{r.name}</option>))}
             </CFormSelect>
-            <CFormInput type="text" name="sectionname" label="Section Name" value={newSection.sectionname} onChange={handleInputChange} className="mb-3" />
-            <CFormInput type="number" name="position" label="Position" value={newSection.position} onChange={handleInputChange} className="mb-3" />
-            <CFormInput type="text" name="description" label="Description" value={newSection.description} onChange={handleInputChange} />
+            <CFormInput type="text" name="sectionname" label="Section Name" value={currentSection.sectionname || ''} onChange={handleInputChange} className="mb-3" />
+            <CFormInput type="number" name="position" label="Position" value={currentSection.position || ''} onChange={handleInputChange} className="mb-3" />
+            <CFormInput type="text" name="description" label="Description" value={currentSection.description || ''} onChange={handleInputChange} />
           </CForm>
         </CModalBody>
         <CModalFooter>
           <CButton color="secondary" onClick={() => setVisible(false)}>Close</CButton>
-          <CButton color="primary" onClick={handleAddSection}>Save Section</CButton>
+          <CButton color="primary" onClick={handleSaveSection}>{isEditMode ? 'Update Section' : 'Save Section'}</CButton>
         </CModalFooter>
       </CModal>
     </CContainer>

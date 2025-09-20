@@ -18,6 +18,7 @@ app.get('/api/health', (req, res) => {
 
 // Import the database client and the specific tables we need
 import { db } from './src/db/index.js';
+import { eq } from 'drizzle-orm';
 import { client, report, vertical, competitor, user, tag, metric, entity, socialprofile, review, adcreative, reportsection, sectionitem, insight, metricvalue, reportmedia, reporttag } from './drizzle/schema.js';
 
 app.get('/api/clients', async (req, res) => {
@@ -753,6 +754,964 @@ app.post('/api/reporttags', async (req, res) => {
   } catch (error) {
     console.error('Error creating report tag:', error);
     res.status(500).json({ error: 'Failed to create report tag' });
+  }
+});
+
+// Endpoint to update an entity
+app.put('/api/entities/:id', async (req, res) => {
+  const { id } = req.params;
+  const { name, type, clientid } = req.body;
+
+  if (!name || !type) {
+    return res.status(400).json({ error: 'Name and type are required' });
+  }
+
+  try {
+    const updated = await db.update(entity)
+      .set({ name, type, clientid: clientid ? parseInt(clientid, 10) : null })
+      .where(eq(entity.entityid, parseInt(id, 10)))
+      .returning();
+
+    if (updated.length === 0) {
+      return res.status(404).json({ error: 'Entity not found' });
+    }
+
+    console.log('Entity updated successfully:', updated[0]);
+    res.json(updated[0]);
+  } catch (error) {
+    console.error('Error updating entity:', error);
+    res.status(500).json({ error: 'Failed to update entity' });
+  }
+});
+
+// Endpoint to delete an entity
+app.delete('/api/entities/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const deleted = await db.delete(entity)
+      .where(eq(entity.entityid, parseInt(id, 10)))
+      .returning();
+
+    if (deleted.length === 0) {
+      return res.status(404).json({ error: 'Entity not found' });
+    }
+
+    console.log('Entity deleted successfully:', deleted[0]);
+    res.status(204).send(); // No content
+  } catch (error) {
+    console.error('Error deleting entity:', error);
+    res.status(500).json({ error: 'Failed to delete entity' });
+  }
+});
+
+// Endpoint to update a client
+app.put('/api/clients/:id', async (req, res) => {
+  const { id } = req.params;
+  const { name, industry, region } = req.body;
+
+  if (!name) {
+    return res.status(400).json({ error: 'Name is required' });
+  }
+
+  try {
+    const updated = await db.update(client)
+      .set({ name, industry, region })
+      .where(eq(client.clientid, parseInt(id, 10)))
+      .returning();
+
+    if (updated.length === 0) {
+      return res.status(404).json({ error: 'Client not found' });
+    }
+
+    console.log('Client updated successfully:', updated[0]);
+    res.json(updated[0]);
+  } catch (error) {
+    console.error('Error updating client:', error);
+    res.status(500).json({ error: 'Failed to update client' });
+  }
+});
+
+// Endpoint to delete a client
+app.delete('/api/clients/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const deleted = await db.delete(client)
+      .where(eq(client.clientid, parseInt(id, 10)))
+      .returning();
+
+    if (deleted.length === 0) {
+      return res.status(404).json({ error: 'Client not found' });
+    }
+
+    console.log('Client deleted successfully:', deleted[0]);
+    res.status(204).send(); // No content
+  } catch (error) {
+    console.error('Error deleting client:', error);
+    res.status(500).json({ error: 'Failed to delete client' });
+  }
+});
+
+// Endpoint to update a report
+app.put('/api/reports/:id', async (req, res) => {
+  const { id } = req.params;
+  const { name, clientid, startdate, enddate, status } = req.body;
+
+  if (!name || !clientid) {
+    return res.status(400).json({ error: 'Name and Client ID are required' });
+  }
+
+  try {
+    const updated = await db.update(report)
+      .set({ 
+        name, 
+        clientid: parseInt(clientid, 10), 
+        startdate, 
+        enddate, 
+        status 
+      })
+      .where(eq(report.reportid, parseInt(id, 10)))
+      .returning();
+
+    if (updated.length === 0) {
+      return res.status(404).json({ error: 'Report not found' });
+    }
+
+    console.log('Report updated successfully:', updated[0]);
+    res.json(updated[0]);
+  } catch (error) {
+    console.error('Error updating report:', error);
+    res.status(500).json({ error: 'Failed to update report' });
+  }
+});
+
+// Endpoint to delete a report
+app.delete('/api/reports/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const deleted = await db.delete(report)
+      .where(eq(report.reportid, parseInt(id, 10)))
+      .returning();
+
+    if (deleted.length === 0) {
+      return res.status(404).json({ error: 'Report not found' });
+    }
+
+    console.log('Report deleted successfully:', deleted[0]);
+    res.status(204).send(); // No content
+  } catch (error) {
+    console.error('Error deleting report:', error);
+    res.status(500).json({ error: 'Failed to delete report' });
+  }
+});
+
+// Endpoint to update a vertical
+app.put('/api/verticals/:id', async (req, res) => {
+  const { id } = req.params;
+  const { name, description } = req.body;
+
+  if (!name) {
+    return res.status(400).json({ error: 'Name is required' });
+  }
+
+  try {
+    const updated = await db.update(vertical)
+      .set({ name, description })
+      .where(eq(vertical.verticalid, parseInt(id, 10)))
+      .returning();
+
+    if (updated.length === 0) {
+      return res.status(404).json({ error: 'Vertical not found' });
+    }
+
+    console.log('Vertical updated successfully:', updated[0]);
+    res.json(updated[0]);
+  } catch (error) {
+    console.error('Error updating vertical:', error);
+    res.status(500).json({ error: 'Failed to update vertical' });
+  }
+});
+
+// Endpoint to delete a vertical
+app.delete('/api/verticals/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const deleted = await db.delete(vertical)
+      .where(eq(vertical.verticalid, parseInt(id, 10)))
+      .returning();
+
+    if (deleted.length === 0) {
+      return res.status(404).json({ error: 'Vertical not found' });
+    }
+
+    console.log('Vertical deleted successfully:', deleted[0]);
+    res.status(204).send(); // No content
+  } catch (error) {
+    console.error('Error deleting vertical:', error);
+    res.status(500).json({ error: 'Failed to delete vertical' });
+  }
+});
+
+// Endpoint to update a competitor
+app.put('/api/competitors/:id', async (req, res) => {
+  const { id } = req.params;
+  const { name, verticalid, description } = req.body;
+
+  if (!name) {
+    return res.status(400).json({ error: 'Name is required' });
+  }
+
+  try {
+    const updated = await db.update(competitor)
+      .set({ 
+        name, 
+        verticalid: verticalid ? parseInt(verticalid, 10) : null, 
+        description 
+      })
+      .where(eq(competitor.competitorid, parseInt(id, 10)))
+      .returning();
+
+    if (updated.length === 0) {
+      return res.status(404).json({ error: 'Competitor not found' });
+    }
+
+    console.log('Competitor updated successfully:', updated[0]);
+    res.json(updated[0]);
+  } catch (error) {
+    console.error('Error updating competitor:', error);
+    res.status(500).json({ error: 'Failed to update competitor' });
+  }
+});
+
+// Endpoint to delete a competitor
+app.delete('/api/competitors/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const deleted = await db.delete(competitor)
+      .where(eq(competitor.competitorid, parseInt(id, 10)))
+      .returning();
+
+    if (deleted.length === 0) {
+      return res.status(404).json({ error: 'Competitor not found' });
+    }
+
+    console.log('Competitor deleted successfully:', deleted[0]);
+    res.status(204).send(); // No content
+  } catch (error) {
+    console.error('Error deleting competitor:', error);
+    res.status(500).json({ error: 'Failed to delete competitor' });
+  }
+});
+
+// Endpoint to update a user
+app.put('/api/users/:id', async (req, res) => {
+  const { id } = req.params;
+  const { name, email, role } = req.body;
+
+  if (!name || !email) {
+    return res.status(400).json({ error: 'Name and email are required' });
+  }
+
+  try {
+    const updated = await db.update(user)
+      .set({ name, email, role })
+      .where(eq(user.userid, parseInt(id, 10)))
+      .returning();
+
+    if (updated.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    console.log('User updated successfully:', updated[0]);
+    res.json(updated[0]);
+  } catch (error) {
+    console.error('Error updating user:', error);
+    res.status(500).json({ error: 'Failed to update user' });
+  }
+});
+
+// Endpoint to delete a user
+app.delete('/api/users/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const deleted = await db.delete(user)
+      .where(eq(user.userid, parseInt(id, 10)))
+      .returning();
+
+    if (deleted.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    console.log('User deleted successfully:', deleted[0]);
+    res.status(204).send(); // No content
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    res.status(500).json({ error: 'Failed to delete user' });
+  }
+});
+
+// Endpoint to get report sections by report ID
+app.get('/api/reports/:reportId/sections', async (req, res) => {
+  const { reportId } = req.params;
+
+  try {
+    console.log(`Fetching sections for report ID: ${reportId}`);
+    const sections = await db.select().from(reportsection)
+      .where(eq(reportsection.reportid, parseInt(reportId, 10)))
+      .orderBy(reportsection.position);
+    
+    console.log(`Found ${sections.length} sections for report ${reportId}`);
+    res.json(sections);
+  } catch (error) {
+    console.error('Error fetching report sections:', error);
+    res.status(500).json({ error: 'Failed to fetch report sections' });
+  }
+});
+
+// Endpoint to get section items by section ID
+app.get('/api/report-sections/:sectionId/items', async (req, res) => {
+  const { sectionId } = req.params;
+
+  try {
+    console.log(`Fetching items for section ID: ${sectionId}`);
+    const items = await db.select().from(sectionitem)
+      .where(eq(sectionitem.sectionid, parseInt(sectionId, 10)))
+      .orderBy(sectionitem.position);
+    
+    console.log(`Found ${items.length} items for section ${sectionId}`);
+    res.json(items);
+  } catch (error) {
+    console.error('Error fetching section items:', error);
+    res.status(500).json({ error: 'Failed to fetch section items' });
+  }
+});
+
+// Endpoint to get insights by section ID
+app.get('/api/report-sections/:sectionId/insights', async (req, res) => {
+  const { sectionId } = req.params;
+
+  try {
+    console.log(`Fetching insights for section ID: ${sectionId}`);
+    const insights = await db.select().from(insight)
+      .where(eq(insight.reportsectionid, parseInt(sectionId, 10)))
+      .orderBy(insight.position);
+    
+    console.log(`Found ${insights.length} insights for section ${sectionId}`);
+    res.json(insights);
+  } catch (error) {
+    console.error('Error fetching section insights:', error);
+    res.status(500).json({ error: 'Failed to fetch section insights' });
+  }
+});
+
+// Endpoint to get media by section ID
+app.get('/api/report-sections/:sectionId/media', async (req, res) => {
+  const { sectionId } = req.params;
+
+  try {
+    console.log(`Fetching media for section ID: ${sectionId}`);
+    const media = await db.select().from(reportmedia)
+      .where(eq(reportmedia.sectionid, parseInt(sectionId, 10)))
+      .orderBy(reportmedia.createdat);
+    
+    console.log(`Found ${media.length} media items for section ${sectionId}`);
+    res.json(media);
+  } catch (error) {
+    console.error('Error fetching section media:', error);
+    res.status(500).json({ error: 'Failed to fetch section media' });
+  }
+});
+
+// Dashboard statistics endpoints
+app.get('/api/stats/reports-by-client', async (req, res) => {
+  try {
+    console.log('Fetching report statistics by client...');
+    const stats = await db.select({
+      clientName: client.name,
+      reportCount: sql`COUNT(${report.reportid})`
+    })
+    .from(client)
+    .leftJoin(report, eq(client.clientid, report.clientid))
+    .groupBy(client.clientid, client.name);
+
+    console.log(`Found ${stats.length} client statistics.`);
+    res.json(stats);
+  } catch (error) {
+    console.error('Error fetching report statistics by client:', error);
+    res.status(500).json({ error: 'Failed to fetch report statistics by client' });
+  }
+});
+
+app.get('/api/stats/entities-by-type', async (req, res) => {
+  try {
+    console.log('Fetching entity statistics by type...');
+    const stats = await db.select({
+      entityType: entity.type,
+      entityCount: sql`COUNT(${entity.entityid})`
+    })
+    .from(entity)
+    .groupBy(entity.type);
+
+    console.log(`Found ${stats.length} entity type statistics.`);
+    res.json(stats);
+  } catch (error) {
+    console.error('Error fetching entity statistics by type:', error);
+    res.status(500).json({ error: 'Failed to fetch entity statistics by type' });
+  }
+});
+
+app.get('/api/stats/users-by-month', async (req, res) => {
+  try {
+    console.log('Fetching user statistics by month...');
+    const stats = await db.select({
+      month: sql`DATE_TRUNC('month', ${user.createdat})`.as('month'),
+      userCount: sql`COUNT(${user.userid})`.as('user_count')
+    })
+    .from(user)
+    .groupBy(sql`DATE_TRUNC('month', ${user.createdat})`)
+    .orderBy(sql`DATE_TRUNC('month', ${user.createdat})`);
+
+    console.log(`Found ${stats.length} monthly user statistics.`);
+    res.json(stats);
+  } catch (error) {
+    console.error('Error fetching user statistics by month:', error);
+    res.status(500).json({ error: 'Failed to fetch user statistics by month' });
+  }
+});
+
+// Endpoint to update a tag
+app.put('/api/tags/:id', async (req, res) => {
+  const { id } = req.params;
+  const { name, description } = req.body;
+
+  if (!name) {
+    return res.status(400).json({ error: 'Name is required' });
+  }
+
+  try {
+    const updated = await db.update(tag)
+      .set({ name, description })
+      .where(eq(tag.tagid, parseInt(id, 10)))
+      .returning();
+
+    if (updated.length === 0) {
+      return res.status(404).json({ error: 'Tag not found' });
+    }
+
+    console.log('Tag updated successfully:', updated[0]);
+    res.json(updated[0]);
+  } catch (error) {
+    console.error('Error updating tag:', error);
+    res.status(500).json({ error: 'Failed to update tag' });
+  }
+});
+
+// Endpoint to delete a tag
+app.delete('/api/tags/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const deleted = await db.delete(tag)
+      .where(eq(tag.tagid, parseInt(id, 10)))
+      .returning();
+
+    if (deleted.length === 0) {
+      return res.status(404).json({ error: 'Tag not found' });
+    }
+
+    console.log('Tag deleted successfully:', deleted[0]);
+    res.status(204).send(); // No content
+  } catch (error) {
+    console.error('Error deleting tag:', error);
+    res.status(500).json({ error: 'Failed to delete tag' });
+  }
+});
+
+// Endpoint to update a metric
+app.put('/api/metrics/:id', async (req, res) => {
+  const { id } = req.params;
+  const { name, description, type } = req.body;
+
+  if (!name) {
+    return res.status(400).json({ error: 'Name is required' });
+  }
+
+  try {
+    const updated = await db.update(metric)
+      .set({ name, description, type })
+      .where(eq(metric.metricid, parseInt(id, 10)))
+      .returning();
+
+    if (updated.length === 0) {
+      return res.status(404).json({ error: 'Metric not found' });
+    }
+
+    console.log('Metric updated successfully:', updated[0]);
+    res.json(updated[0]);
+  } catch (error) {
+    console.error('Error updating metric:', error);
+    res.status(500).json({ error: 'Failed to update metric' });
+  }
+});
+
+// Endpoint to delete a metric
+app.delete('/api/metrics/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const deleted = await db.delete(metric)
+      .where(eq(metric.metricid, parseInt(id, 10)))
+      .returning();
+
+    if (deleted.length === 0) {
+      return res.status(404).json({ error: 'Metric not found' });
+    }
+
+    console.log('Metric deleted successfully:', deleted[0]);
+    res.status(204).send(); // No content
+  } catch (error) {
+    console.error('Error deleting metric:', error);
+    res.status(500).json({ error: 'Failed to delete metric' });
+  }
+});
+
+// Endpoint to update a social profile
+app.put('/api/socialprofiles/:id', async (req, res) => {
+  const { id } = req.params;
+  const { entityid, platform, url, followers } = req.body;
+
+  if (!entityid || !platform || !url) {
+    return res.status(400).json({ error: 'Entity ID, platform, and URL are required' });
+  }
+
+  try {
+    const updated = await db.update(socialprofile)
+      .set({ 
+        entityid: parseInt(entityid, 10),
+        platform,
+        url,
+        followers: followers ? parseInt(followers, 10) : null
+      })
+      .where(eq(socialprofile.profileid, parseInt(id, 10)))
+      .returning();
+
+    if (updated.length === 0) {
+      return res.status(404).json({ error: 'Social profile not found' });
+    }
+
+    console.log('Social profile updated successfully:', updated[0]);
+    res.json(updated[0]);
+  } catch (error) {
+    console.error('Error updating social profile:', error);
+    res.status(500).json({ error: 'Failed to update social profile' });
+  }
+});
+
+// Endpoint to delete a social profile
+app.delete('/api/socialprofiles/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const deleted = await db.delete(socialprofile)
+      .where(eq(socialprofile.profileid, parseInt(id, 10)))
+      .returning();
+
+    if (deleted.length === 0) {
+      return res.status(404).json({ error: 'Social profile not found' });
+    }
+
+    console.log('Social profile deleted successfully:', deleted[0]);
+    res.status(204).send(); // No content
+  } catch (error) {
+    console.error('Error deleting social profile:', error);
+    res.status(500).json({ error: 'Failed to delete social profile' });
+  }
+});
+
+// Endpoint to update a review
+app.put('/api/reviews/:id', async (req, res) => {
+  const { id } = req.params;
+  const { entityid, source, rating, content } = req.body;
+
+  if (!entityid || !source) {
+    return res.status(400).json({ error: 'Entity ID and source are required' });
+  }
+
+  try {
+    const updated = await db.update(review)
+      .set({ 
+        entityid: parseInt(entityid, 10),
+        source,
+        rating: rating ? parseFloat(rating) : null,
+        content
+      })
+      .where(eq(review.reviewid, parseInt(id, 10)))
+      .returning();
+
+    if (updated.length === 0) {
+      return res.status(404).json({ error: 'Review not found' });
+    }
+
+    console.log('Review updated successfully:', updated[0]);
+    res.json(updated[0]);
+  } catch (error) {
+    console.error('Error updating review:', error);
+    res.status(500).json({ error: 'Failed to update review' });
+  }
+});
+
+// Endpoint to delete a review
+app.delete('/api/reviews/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const deleted = await db.delete(review)
+      .where(eq(review.reviewid, parseInt(id, 10)))
+      .returning();
+
+    if (deleted.length === 0) {
+      return res.status(404).json({ error: 'Review not found' });
+    }
+
+    console.log('Review deleted successfully:', deleted[0]);
+    res.status(204).send(); // No content
+  } catch (error) {
+    console.error('Error deleting review:', error);
+    res.status(500).json({ error: 'Failed to delete review' });
+  }
+});
+
+// Endpoint to update an ad creative
+app.put('/api/adcreatives/:id', async (req, res) => {
+  const { id } = req.params;
+  const { entityid, reportid, format, campaign, creativeurl, performancenotes, adplatform } = req.body;
+
+  if (!entityid || !reportid) {
+    return res.status(400).json({ error: 'Entity ID and Report ID are required' });
+  }
+
+  try {
+    const updated = await db.update(adcreative)
+      .set({ 
+        entityid: parseInt(entityid, 10),
+        reportid: parseInt(reportid, 10),
+        format,
+        campaign,
+        creativeurl,
+        performancenotes,
+        adplatform
+      })
+      .where(eq(adcreative.adid, parseInt(id, 10)))
+      .returning();
+
+    if (updated.length === 0) {
+      return res.status(404).json({ error: 'Ad creative not found' });
+    }
+
+    console.log('Ad creative updated successfully:', updated[0]);
+    res.json(updated[0]);
+  } catch (error) {
+    console.error('Error updating ad creative:', error);
+    res.status(500).json({ error: 'Failed to update ad creative' });
+  }
+});
+
+// Endpoint to delete an ad creative
+app.delete('/api/adcreatives/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const deleted = await db.delete(adcreative)
+      .where(eq(adcreative.adid, parseInt(id, 10)))
+      .returning();
+
+    if (deleted.length === 0) {
+      return res.status(404).json({ error: 'Ad creative not found' });
+    }
+
+    console.log('Ad creative deleted successfully:', deleted[0]);
+    res.status(204).send(); // No content
+  } catch (error) {
+    console.error('Error deleting ad creative:', error);
+    res.status(500).json({ error: 'Failed to delete ad creative' });
+  }
+});
+
+// Endpoint to update a report section
+app.put('/api/reportsections/:id', async (req, res) => {
+  const { id } = req.params;
+  const { reportid, sectionname, position, description } = req.body;
+
+  if (!reportid || !sectionname) {
+    return res.status(400).json({ error: 'Report ID and section name are required' });
+  }
+
+  try {
+    const updated = await db.update(reportsection)
+      .set({ 
+        reportid: parseInt(reportid, 10),
+        sectionname,
+        position: position ? parseInt(position, 10) : null,
+        description
+      })
+      .where(eq(reportsection.sectionid, parseInt(id, 10)))
+      .returning();
+
+    if (updated.length === 0) {
+      return res.status(404).json({ error: 'Report section not found' });
+    }
+
+    console.log('Report section updated successfully:', updated[0]);
+    res.json(updated[0]);
+  } catch (error) {
+    console.error('Error updating report section:', error);
+    res.status(500).json({ error: 'Failed to update report section' });
+  }
+});
+
+// Endpoint to delete a report section
+app.delete('/api/reportsections/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const deleted = await db.delete(reportsection)
+      .where(eq(reportsection.sectionid, parseInt(id, 10)))
+      .returning();
+
+    if (deleted.length === 0) {
+      return res.status(404).json({ error: 'Report section not found' });
+    }
+
+    console.log('Report section deleted successfully:', deleted[0]);
+    res.status(204).send(); // No content
+  } catch (error) {
+    console.error('Error deleting report section:', error);
+    res.status(500).json({ error: 'Failed to delete report section' });
+  }
+});
+
+// Endpoint to update a section item
+app.put('/api/sectionitems/:id', async (req, res) => {
+  const { id } = req.params;
+  const { sectionid, itemtitle, content, position, type } = req.body;
+
+  if (!sectionid || !itemtitle) {
+    return res.status(400).json({ error: 'Section ID and item title are required' });
+  }
+
+  try {
+    const updated = await db.update(sectionitem)
+      .set({ 
+        sectionid: parseInt(sectionid, 10),
+        itemtitle,
+        content,
+        position: position ? parseInt(position, 10) : null,
+        type
+      })
+      .where(eq(sectionitem.itemid, parseInt(id, 10)))
+      .returning();
+
+    if (updated.length === 0) {
+      return res.status(404).json({ error: 'Section item not found' });
+    }
+
+    console.log('Section item updated successfully:', updated[0]);
+    res.json(updated[0]);
+  } catch (error) {
+    console.error('Error updating section item:', error);
+    res.status(500).json({ error: 'Failed to update section item' });
+  }
+});
+
+// Endpoint to delete a section item
+app.delete('/api/sectionitems/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const deleted = await db.delete(sectionitem)
+      .where(eq(sectionitem.itemid, parseInt(id, 10)))
+      .returning();
+
+    if (deleted.length === 0) {
+      return res.status(404).json({ error: 'Section item not found' });
+    }
+
+    console.log('Section item deleted successfully:', deleted[0]);
+    res.status(204).send(); // No content
+  } catch (error) {
+    console.error('Error deleting section item:', error);
+    res.status(500).json({ error: 'Failed to delete section item' });
+  }
+});
+
+// Endpoint to update an insight
+app.put('/api/insights/:id', async (req, res) => {
+  const { id } = req.params;
+  const { reportsectionid, title, type, content, position, priority } = req.body;
+
+  if (!reportsectionid || !title) {
+    return res.status(400).json({ error: 'Report Section ID and title are required' });
+  }
+
+  try {
+    const updated = await db.update(insight)
+      .set({ 
+        reportsectionid: parseInt(reportsectionid, 10),
+        title,
+        type,
+        content,
+        position: position ? parseInt(position, 10) : null,
+        priority
+      })
+      .where(eq(insight.insightid, parseInt(id, 10)))
+      .returning();
+
+    if (updated.length === 0) {
+      return res.status(404).json({ error: 'Insight not found' });
+    }
+
+    console.log('Insight updated successfully:', updated[0]);
+    res.json(updated[0]);
+  } catch (error) {
+    console.error('Error updating insight:', error);
+    res.status(500).json({ error: 'Failed to update insight' });
+  }
+});
+
+// Endpoint to delete an insight
+app.delete('/api/insights/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const deleted = await db.delete(insight)
+      .where(eq(insight.insightid, parseInt(id, 10)))
+      .returning();
+
+    if (deleted.length === 0) {
+      return res.status(404).json({ error: 'Insight not found' });
+    }
+
+    console.log('Insight deleted successfully:', deleted[0]);
+    res.status(204).send(); // No content
+  } catch (error) {
+    console.error('Error deleting insight:', error);
+    res.status(500).json({ error: 'Failed to delete insight' });
+  }
+});
+
+// Endpoint to update a metric value
+app.put('/api/metricvalues/:id', async (req, res) => {
+  const { id } = req.params;
+  const { metricid, entityid, reportid, periodtype, periodvalue, value, additionalinfo } = req.body;
+
+  if (metricid === undefined || entityid === undefined || value === undefined) {
+    return res.status(400).json({ error: 'Metric ID, Entity ID, and value are required' });
+  }
+
+  try {
+    const updated = await db.update(metricvalue)
+      .set({ 
+        metricid: parseInt(metricid, 10),
+        entityid: parseInt(entityid, 10),
+        reportid: reportid ? parseInt(reportid, 10) : null,
+        periodtype,
+        periodvalue,
+        value,
+        additionalinfo
+      })
+      .where(eq(metricvalue.valueid, parseInt(id, 10)))
+      .returning();
+
+    if (updated.length === 0) {
+      return res.status(404).json({ error: 'Metric value not found' });
+    }
+
+    console.log('Metric value updated successfully:', updated[0]);
+    res.json(updated[0]);
+  } catch (error) {
+    console.error('Error updating metric value:', error);
+    res.status(500).json({ error: 'Failed to update metric value' });
+  }
+});
+
+// Endpoint to delete a metric value
+app.delete('/api/metricvalues/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const deleted = await db.delete(metricvalue)
+      .where(eq(metricvalue.valueid, parseInt(id, 10)))
+      .returning();
+
+    if (deleted.length === 0) {
+      return res.status(404).json({ error: 'Metric value not found' });
+    }
+
+    console.log('Metric value deleted successfully:', deleted[0]);
+    res.status(204).send(); // No content
+  } catch (error) {
+    console.error('Error deleting metric value:', error);
+    res.status(500).json({ error: 'Failed to delete metric value' });
+  }
+});
+
+// Endpoint to update a report medium
+app.put('/api/reportmedia/:id', async (req, res) => {
+  const { id } = req.params;
+  const { reportid, sectionid, type, url, caption, filesize } = req.body;
+
+  if (!reportid || !type || !url) {
+    return res.status(400).json({ error: 'Report ID, type, and URL are required' });
+  }
+
+  try {
+    const updated = await db.update(reportmedia)
+      .set({ 
+        reportid: parseInt(reportid, 10),
+        sectionid: sectionid ? parseInt(sectionid, 10) : null,
+        type,
+        url,
+        caption,
+        filesize: filesize ? parseInt(filesize, 10) : null
+      })
+      .where(eq(reportmedia.mediaid, parseInt(id, 10)))
+      .returning();
+
+    if (updated.length === 0) {
+      return res.status(404).json({ error: 'Report medium not found' });
+    }
+
+    console.log('Report medium updated successfully:', updated[0]);
+    res.json(updated[0]);
+  } catch (error) {
+    console.error('Error updating report medium:', error);
+    res.status(500).json({ error: 'Failed to update report medium' });
+  }
+});
+
+// Endpoint to delete a report medium
+app.delete('/api/reportmedia/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const deleted = await db.delete(reportmedia)
+      .where(eq(reportmedia.mediaid, parseInt(id, 10)))
+      .returning();
+
+    if (deleted.length === 0) {
+      return res.status(404).json({ error: 'Report medium not found' });
+    }
+
+    console.log('Report medium deleted successfully:', deleted[0]);
+    res.status(204).send(); // No content
+  } catch (error) {
+    console.error('Error deleting report medium:', error);
+    res.status(500).json({ error: 'Failed to delete report medium' });
   }
 });
 

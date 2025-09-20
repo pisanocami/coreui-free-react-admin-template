@@ -33,21 +33,19 @@ import { CNavGroup, CNavItem, CNavTitle } from '@coreui/react'
 const _nav = [
   {
     component: CNavItem,
-    name: 'Reportes',
+    name: 'Dashboard',
     to: '/dashboard',
     icon: <CIcon icon={cilSpeedometer} customClassName="nav-icon" />,
+  },
+  {
+    component: CNavTitle,
+    name: 'Gestión de Clientes',
   },
   {
     component: CNavItem,
     name: 'Clients',
     to: '/clients',
     icon: <CIcon icon={cilPeople} customClassName="nav-icon" />,
-  },
-  {
-    component: CNavItem,
-    name: 'Reports',
-    to: '/reports',
-    icon: <CIcon icon={cilNotes} customClassName="nav-icon" />,
   },
   {
     component: CNavItem,
@@ -62,22 +60,42 @@ const _nav = [
     icon: <CIcon icon={cilChartPie} customClassName="nav-icon" />,
   },
   {
-    component: CNavItem,
-    name: 'Users',
-    to: '/users',
-    icon: <CIcon icon={cilUser} customClassName="nav-icon" />,
+    component: CNavTitle,
+    name: 'Reportes y Análisis',
   },
   {
     component: CNavItem,
-    name: 'Tags',
-    to: '/tags',
-    icon: <CIcon icon={cilTag} customClassName="nav-icon" />,
+    name: 'Reports',
+    to: '/reports',
+    icon: <CIcon icon={cilNotes} customClassName="nav-icon" />,
   },
   {
     component: CNavItem,
-    name: 'Metrics',
-    to: '/metrics',
-    icon: <CIcon icon={cilCalculator} customClassName="nav-icon" />,
+    name: 'Visualización de Reportes',
+    to: '/report-view',
+    icon: <CIcon icon={cilExternalLink} customClassName="nav-icon" />,
+  },
+  {
+    component: CNavItem,
+    name: 'Report Sections',
+    to: '/report-sections',
+    icon: <CIcon icon={cilLibrary} customClassName="nav-icon" />,
+  },
+  {
+    component: CNavItem,
+    name: 'Section Items',
+    to: '/section-items',
+    icon: <CIcon icon={cilList} customClassName="nav-icon" />,
+  },
+  {
+    component: CNavItem,
+    name: 'Insights',
+    to: '/insights',
+    icon: <CIcon icon={cilLightbulb} customClassName="nav-icon" />,
+  },
+  {
+    component: CNavTitle,
+    name: 'Entidades',
   },
   {
     component: CNavItem,
@@ -105,47 +123,43 @@ const _nav = [
   },
   {
     component: CNavItem,
-    name: 'Report Sections',
-    to: '/report-sections',
-    icon: <CIcon icon={cilLibrary} customClassName="nav-icon" />,
+    name: 'Report Media',
+    to: '/report-media',
+    icon: <CIcon icon={cilMovie} customClassName="nav-icon" />,
+  },
+  {
+    component: CNavTitle,
+    name: 'Configuración',
   },
   {
     component: CNavItem,
-    name: 'Section Items',
-    to: '/section-items',
-    icon: <CIcon icon={cilList} customClassName="nav-icon" />,
+    name: 'Users',
+    to: '/users',
+    icon: <CIcon icon={cilUser} customClassName="nav-icon" />,
   },
   {
     component: CNavItem,
-    name: 'Insights',
-    to: '/insights',
-    icon: <CIcon icon={cilLightbulb} customClassName="nav-icon" />,
+    name: 'Tags',
+    to: '/tags',
+    icon: <CIcon icon={cilTags} customClassName="nav-icon" />,
+  },
+  {
+    component: CNavItem,
+    name: 'Report Tags',
+    to: '/report-tags',
+    icon: <CIcon icon={cilTag} customClassName="nav-icon" />,
+  },
+  {
+    component: CNavItem,
+    name: 'Metrics',
+    to: '/metrics',
+    icon: <CIcon icon={cilCalculator} customClassName="nav-icon" />,
   },
   {
     component: CNavItem,
     name: 'Metric Values',
     to: '/metric-values',
     icon: <CIcon icon={cilBarChart} customClassName="nav-icon" />,
-  },
-  {
-    component: CNavItem,
-    name: 'Report Media',
-    to: '/report-media',
-    icon: <CIcon icon={cilMovie} customClassName="nav-icon" />,
-  },
-  {
-    component: CNavItem,
-    name: 'Report Tags',
-    to: '/report-tags',
-    icon: <CIcon icon={cilTags} customClassName="nav-icon" />,
-  },
-  // --> ADD NEW NAVIGATION ITEMS HERE <--
-  // See README_NEON.md, section '3. Crear la Página en el Frontend' for instructions.
-  {
-    component: CNavItem,
-    name: 'Perfil',
-    to: '/profile',
-    icon: <CIcon icon={cilStar} customClassName="nav-icon" />,
   },
   {
     component: CNavItem,
@@ -158,6 +172,12 @@ const _nav = [
     name: 'Secciones',
     to: '/sections',
     icon: <CIcon icon={cilDescription} customClassName="nav-icon" />,
+  },
+  {
+    component: CNavItem,
+    name: 'Perfil',
+    to: '/profile',
+    icon: <CIcon icon={cilStar} customClassName="nav-icon" />,
   },
 ]
 

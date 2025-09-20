@@ -14,6 +14,7 @@ const SectionsAdmin = React.lazy(() => import('./pages/Sections/Sections'))
 const AdminMockReports = React.lazy(() => import('./pages/AdminMockReports'))
 const Clients = React.lazy(() => import('./pages/Clients/Clients'))
 const Reports = React.lazy(() => import('./pages/Reports/Reports'))
+const ReportView = React.lazy(() => import('./pages/ReportView/ReportView'))
 const Verticals = React.lazy(() => import('./pages/Verticals/Verticals'))
 const Competitors = React.lazy(() => import('./pages/Competitors/Competitors'))
 const Users = React.lazy(() => import('./pages/Users/Users'))
@@ -46,6 +47,7 @@ const routes = [
   { path: '/admin/mock-reports', name: 'Mock Reports', element: AdminMockReports },
   { path: '/clients', name: 'Clients', element: Clients },
   { path: '/reports', name: 'Reports', element: Reports },
+  { path: '/report-view', name: 'Visualización de Reportes', element: ReportView },
   { path: '/verticals', name: 'Verticals', element: Verticals },
   { path: '/competitors', name: 'Competitors', element: Competitors },
   { path: '/users', name: 'Users', element: Users },

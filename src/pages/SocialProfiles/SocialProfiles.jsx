@@ -22,58 +22,88 @@ const SocialProfiles = () => {
   const [profiles, setProfiles] = useState([])
   const [entities, setEntities] = useState([])
   const [visible, setVisible] = useState(false)
-  const [newProfile, setNewProfile] = useState({ entityid: '', platform: '', url: '', followers: '' })
+  const [isEditMode, setIsEditMode] = useState(false)
+  const [currentProfile, setCurrentProfile] = useState({ entityid: '', platform: '', url: '', followers: '' })
 
-  useEffect(() => {
-    // Fetch all social profiles
+  const fetchProfiles = () => {
     fetch('/api/socialprofiles')
       .then((response) => response.json())
       .then((data) => setProfiles(data))
       .catch((error) => console.error('Error fetching social profiles:', error))
+  }
 
-    // Fetch all entities to populate the dropdown
+  const fetchEntities = () => {
     fetch('/api/entities')
       .then((response) => response.json())
       .then((data) => setEntities(data))
       .catch((error) => console.error('Error fetching entities:', error))
+  }
+
+  useEffect(() => {
+    fetchProfiles()
+    fetchEntities()
   }, [])
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
-    setNewProfile({ ...newProfile, [name]: value })
+    setCurrentProfile({ ...currentProfile, [name]: value })
   }
 
-  const handleAddProfile = () => {
+  const handleSaveProfile = () => {
+    const method = isEditMode ? 'PUT' : 'POST'
+    const url = isEditMode ? `/api/socialprofiles/${currentProfile.profileid}` : '/api/socialprofiles'
+
     const profileData = {
-      ...newProfile,
-      entityid: parseInt(newProfile.entityid, 10),
-      followers: newProfile.followers ? parseInt(newProfile.followers, 10) : null,
+      ...currentProfile,
+      entityid: parseInt(currentProfile.entityid, 10),
+      followers: currentProfile.followers ? parseInt(currentProfile.followers, 10) : null,
     }
 
-    fetch('/api/socialprofiles', {
-      method: 'POST',
+    fetch(url, {
+      method,
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(profileData),
     })
-      .then((response) => response.json())
-      .then((addedProfile) => {
-        if (addedProfile.error) {
-          console.error('Error adding profile:', addedProfile.error)
-          alert(`Error: ${addedProfile.error}`)
-        } else {
-          // To display the name instead of just the ID, we can refetch or manually add it.
-          // For simplicity, we refetch the list.
-          fetch('/api/socialprofiles')
-            .then((response) => response.json())
-            .then((data) => setProfiles(data))
-
-          setVisible(false)
-          setNewProfile({ entityid: '', platform: '', url: '', followers: '' })
+      .then((response) => {
+        if (!response.ok) {
+          return response.json().then(err => { throw new Error(err.error) })
         }
+        return response.status === 204 ? null : response.json()
       })
-      .catch((error) => console.error('Error adding social profile:', error))
+      .then(() => {
+        fetchProfiles()
+        setVisible(false)
+      })
+      .catch((error) => console.error(`Error ${isEditMode ? 'updating' : 'adding'} profile:`, error.message))
+  }
+
+  const openModalForCreate = () => {
+    setIsEditMode(false)
+    setCurrentProfile({ entityid: '', platform: '', url: '', followers: '' })
+    setVisible(true)
+  }
+
+  const openModalForEdit = (profile) => {
+    setIsEditMode(true)
+    setCurrentProfile(profile)
+    setVisible(true)
+  }
+
+  const handleDeleteProfile = (profileid) => {
+    if (window.confirm('Are you sure you want to delete this social profile?')) {
+      fetch(`/api/socialprofiles/${profileid}`, {
+        method: 'DELETE',
+      })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Failed to delete social profile')
+          }
+          fetchProfiles()
+        })
+        .catch(error => console.error('Error deleting social profile:', error.message))
+    }
   }
 
   const entityNameMap = entities.reduce((acc, entity) => {
@@ -85,7 +115,7 @@ const SocialProfiles = () => {
     <CContainer>
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h1>Social Profiles</h1>
-        <CButton color="primary" onClick={() => setVisible(!visible)}>
+        <CButton color="primary" onClick={openModalForCreate}>
           Add Social Profile
         </CButton>
       </div>
@@ -97,6 +127,7 @@ const SocialProfiles = () => {
             <CTableHeaderCell>URL</CTableHeaderCell>
             <CTableHeaderCell>Followers</CTableHeaderCell>
             <CTableHeaderCell>Entity</CTableHeaderCell>
+            <CTableHeaderCell>Actions</CTableHeaderCell>
           </CTableRow>
         </CTableHead>
         <CTableBody>
@@ -107,6 +138,14 @@ const SocialProfiles = () => {
               <CTableDataCell>{profile.url}</CTableDataCell>
               <CTableDataCell>{profile.followers}</CTableDataCell>
               <CTableDataCell>{entityNameMap[profile.entityid] || profile.entityid}</CTableDataCell>
+              <CTableDataCell>
+                <CButton color="light" size="sm" onClick={() => openModalForEdit(profile)} className="me-2">
+                  Edit
+                </CButton>
+                <CButton color="danger" size="sm" onClick={() => handleDeleteProfile(profile.profileid)}>
+                  Delete
+                </CButton>
+              </CTableDataCell>
             </CTableRow>
           ))}
         </CTableBody>
@@ -114,14 +153,14 @@ const SocialProfiles = () => {
 
       <CModal visible={visible} onClose={() => setVisible(false)}>
         <CModalHeader>
-          <CModalTitle>Add New Social Profile</CModalTitle>
+          <CModalTitle>{isEditMode ? 'Edit Social Profile' : 'Add New Social Profile'}</CModalTitle>
         </CModalHeader>
         <CModalBody>
           <CForm>
             <CFormSelect
               name="entityid"
               label="Entity"
-              value={newProfile.entityid}
+              value={currentProfile.entityid || ''}
               onChange={handleInputChange}
               className="mb-3"
             >
@@ -136,8 +175,7 @@ const SocialProfiles = () => {
               type="text"
               name="platform"
               label="Platform"
-              placeholder="e.g., Twitter, Facebook"
-              value={newProfile.platform}
+              value={currentProfile.platform || ''}
               onChange={handleInputChange}
               className="mb-3"
             />
@@ -145,8 +183,7 @@ const SocialProfiles = () => {
               type="text"
               name="url"
               label="URL"
-              placeholder="Enter profile URL"
-              value={newProfile.url}
+              value={currentProfile.url || ''}
               onChange={handleInputChange}
               className="mb-3"
             />
@@ -154,8 +191,7 @@ const SocialProfiles = () => {
               type="number"
               name="followers"
               label="Followers"
-              placeholder="Enter number of followers"
-              value={newProfile.followers}
+              value={currentProfile.followers || ''}
               onChange={handleInputChange}
             />
           </CForm>
@@ -164,8 +200,8 @@ const SocialProfiles = () => {
           <CButton color="secondary" onClick={() => setVisible(false)}>
             Close
           </CButton>
-          <CButton color="primary" onClick={handleAddProfile}>
-            Save Profile
+          <CButton color="primary" onClick={handleSaveProfile}>
+            {isEditMode ? 'Update Profile' : 'Save Profile'}
           </CButton>
         </CModalFooter>
       </CModal>

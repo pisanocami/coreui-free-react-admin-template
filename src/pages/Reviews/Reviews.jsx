@@ -22,85 +22,92 @@ import {
 const Reviews = () => {
   const [reviews, setReviews] = useState([])
   const [entities, setEntities] = useState([])
-  const [reports, setReports] = useState([])
   const [visible, setVisible] = useState(false)
-  const [newReview, setNewReview] = useState({
-    entityid: '',
-    reportid: '',
-    ispositive: false,
-    reviewsource: '',
-    content: '',
-    mentionedproduct: '',
-    rating: '',
-    reviewdate: '',
-  })
+  const [isEditMode, setIsEditMode] = useState(false)
+  const [currentReview, setCurrentReview] = useState({ entityid: '', source: '', rating: '', content: '' })
+
+  const fetchReviews = () => {
+    fetch('/api/reviews')
+      .then((response) => response.json())
+      .then((data) => setReviews(data))
+      .catch((error) => console.error('Error fetching reviews:', error))
+  }
+
+  const fetchEntities = () => {
+    fetch('/api/entities')
+      .then((response) => response.json())
+      .then((data) => setEntities(data))
+      .catch((error) => console.error('Error fetching entities:', error))
+  }
 
   useEffect(() => {
-    // Fetch all data needed for the page
-    const fetchData = async () => {
-      try {
-        const [reviewsRes, entitiesRes, reportsRes] = await Promise.all([
-          fetch('/api/reviews'),
-          fetch('/api/entities'),
-          fetch('/api/reports'),
-        ])
-        const reviewsData = await reviewsRes.json()
-        const entitiesData = await entitiesRes.json()
-        const reportsData = await reportsRes.json()
-        setReviews(reviewsData)
-        setEntities(entitiesData)
-        setReports(reportsData)
-      } catch (error) {
-        console.error('Error fetching data:', error)
-      }
-    }
-    fetchData()
+    fetchReviews()
+    fetchEntities()
   }, [])
 
   const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target
-    setNewReview({ ...newReview, [name]: type === 'checkbox' ? checked : value })
+    const { name, value } = e.target
+    setCurrentReview({ ...currentReview, [name]: value })
   }
 
-  const handleAddReview = () => {
-    const reviewData = {
-      ...newReview,
-      entityid: parseInt(newReview.entityid, 10),
-      reportid: parseInt(newReview.reportid, 10),
-      rating: newReview.rating ? parseInt(newReview.rating, 10) : null,
-    }
+  const handleSaveReview = () => {
+    const method = isEditMode ? 'PUT' : 'POST'
+    const url = isEditMode ? `/api/reviews/${currentReview.reviewid}` : '/api/reviews'
 
-    fetch('/api/reviews', {
-      method: 'POST',
+    fetch(url, {
+      method,
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(reviewData),
+      body: JSON.stringify(currentReview),
     })
-      .then((response) => response.json())
-      .then((addedReview) => {
-        if (addedReview.error) {
-          alert(`Error: ${addedReview.error}`)
-        } else {
-          // Refetch to get the latest data
-          fetch('/api/reviews')
-            .then((res) => res.json())
-            .then(setReviews)
-          setVisible(false)
-          setNewReview({ entityid: '', reportid: '', ispositive: false, reviewsource: '', content: '', mentionedproduct: '', rating: '', reviewdate: '' })
+      .then((response) => {
+        if (!response.ok) {
+          return response.json().then(err => { throw new Error(err.error) })
         }
+        return response.status === 204 ? null : response.json()
       })
-      .catch((error) => console.error('Error adding review:', error))
+      .then(() => {
+        fetchReviews()
+        setVisible(false)
+      })
+      .catch((error) => console.error(`Error ${isEditMode ? 'updating' : 'adding'} review:`, error.message))
+  }
+
+  const openModalForCreate = () => {
+    setIsEditMode(false)
+    setCurrentReview({ entityid: '', source: '', rating: '', content: '' })
+    setVisible(true)
+  }
+
+  const openModalForEdit = (review) => {
+    setIsEditMode(true)
+    setCurrentReview(review)
+    setVisible(true)
+  }
+
+  const handleDeleteReview = (reviewid) => {
+    if (window.confirm('Are you sure you want to delete this review?')) {
+      fetch(`/api/reviews/${reviewid}`, {
+        method: 'DELETE',
+      })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Failed to delete review')
+          }
+          fetchReviews()
+        })
+        .catch(error => console.error('Error deleting review:', error.message))
+    }
   }
 
   const entityNameMap = entities.reduce((acc, entity) => ({ ...acc, [entity.entityid]: entity.name }), {})
-  const reportNameMap = reports.reduce((acc, report) => ({ ...acc, [report.reportid]: report.name }), {})
 
   return (
     <CContainer>
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h1>Reviews</h1>
-        <CButton color="primary" onClick={() => setVisible(!visible)}>
+        <CButton color="primary" onClick={openModalForCreate}>
           Add Review
         </CButton>
       </div>
@@ -110,9 +117,9 @@ const Reviews = () => {
             <CTableHeaderCell>ID</CTableHeaderCell>
             <CTableHeaderCell>Content</CTableHeaderCell>
             <CTableHeaderCell>Entity</CTableHeaderCell>
-            <CTableHeaderCell>Report</CTableHeaderCell>
             <CTableHeaderCell>Rating</CTableHeaderCell>
-            <CTableHeaderCell>Positive</CTableHeaderCell>
+            <CTableHeaderCell>Source</CTableHeaderCell>
+            <CTableHeaderCell>Actions</CTableHeaderCell>
           </CTableRow>
         </CTableHead>
         <CTableBody>
@@ -121,9 +128,16 @@ const Reviews = () => {
               <CTableDataCell>{review.reviewid}</CTableDataCell>
               <CTableDataCell>{review.content}</CTableDataCell>
               <CTableDataCell>{entityNameMap[review.entityid] || review.entityid}</CTableDataCell>
-              <CTableDataCell>{reportNameMap[review.reportid] || review.reportid}</CTableDataCell>
               <CTableDataCell>{review.rating}</CTableDataCell>
-              <CTableDataCell>{review.ispositive ? 'Yes' : 'No'}</CTableDataCell>
+              <CTableDataCell>{review.source}</CTableDataCell>
+              <CTableDataCell>
+                <CButton color="light" size="sm" onClick={() => openModalForEdit(review)} className="me-2">
+                  Edit
+                </CButton>
+                <CButton color="danger" size="sm" onClick={() => handleDeleteReview(review.reviewid)}>
+                  Delete
+                </CButton>
+              </CTableDataCell>
             </CTableRow>
           ))}
         </CTableBody>
@@ -131,29 +145,22 @@ const Reviews = () => {
 
       <CModal visible={visible} onClose={() => setVisible(false)} size="lg">
         <CModalHeader>
-          <CModalTitle>Add New Review</CModalTitle>
+          <CModalTitle>{isEditMode ? 'Edit Review' : 'Add New Review'}</CModalTitle>
         </CModalHeader>
         <CModalBody>
           <CForm>
-            <CFormSelect name="entityid" label="Entity" value={newReview.entityid} onChange={handleInputChange} className="mb-3">
+            <CFormSelect name="entityid" label="Entity" value={currentReview.entityid || ''} onChange={handleInputChange} className="mb-3">
               <option>Select Entity</option>
               {entities.map((e) => (<option key={e.entityid} value={e.entityid}>{e.name}</option>))}
             </CFormSelect>
-            <CFormSelect name="reportid" label="Report" value={newReview.reportid} onChange={handleInputChange} className="mb-3">
-              <option>Select Report</option>
-              {reports.map((r) => (<option key={r.reportid} value={r.reportid}>{r.name}</option>))}
-            </CFormSelect>
-            <CFormInput type="text" name="content" label="Content" value={newReview.content} onChange={handleInputChange} className="mb-3" />
-            <CFormInput type="text" name="reviewsource" label="Source" value={newReview.reviewsource} onChange={handleInputChange} className="mb-3" />
-            <CFormInput type="text" name="mentionedproduct" label="Mentioned Product" value={newReview.mentionedproduct} onChange={handleInputChange} className="mb-3" />
-            <CFormInput type="number" name="rating" label="Rating (1-5)" value={newReview.rating} onChange={handleInputChange} className="mb-3" />
-            <CFormInput type="date" name="reviewdate" label="Review Date" value={newReview.reviewdate} onChange={handleInputChange} className="mb-3" />
-            <CFormCheck name="ispositive" label="Is Positive?" checked={newReview.ispositive} onChange={handleInputChange} />
+            <CFormInput type="text" name="source" label="Source" value={currentReview.source || ''} onChange={handleInputChange} className="mb-3" />
+            <CFormInput type="number" name="rating" label="Rating (1-5)" value={currentReview.rating || ''} onChange={handleInputChange} className="mb-3" />
+            <CFormInput type="text" name="content" label="Content" value={currentReview.content || ''} onChange={handleInputChange} className="mb-3" />
           </CForm>
         </CModalBody>
         <CModalFooter>
           <CButton color="secondary" onClick={() => setVisible(false)}>Close</CButton>
-          <CButton color="primary" onClick={handleAddReview}>Save Review</CButton>
+          <CButton color="primary" onClick={handleSaveReview}>{isEditMode ? 'Update Review' : 'Save Review'}</CButton>
         </CModalFooter>
       </CModal>
     </CContainer>

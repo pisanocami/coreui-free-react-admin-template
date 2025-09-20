@@ -24,25 +24,31 @@ const ReportTags = () => {
   const [visible, setVisible] = useState(false)
   const [newReportTag, setNewReportTag] = useState({ reportid: '', tagid: '' })
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [reportTagsRes, reportsRes, tagsRes] = await Promise.all([
-          fetch('/api/reporttags'),
-          fetch('/api/reports'),
-          fetch('/api/tags'),
-        ])
-        const reportTagsData = await reportTagsRes.json()
-        const reportsData = await reportsRes.json()
-        const tagsData = await tagsRes.json()
-        setReportTags(reportTagsData)
-        setReports(reportsData)
-        setTags(tagsData)
-      } catch (error) {
-        console.error('Error fetching data:', error)
-      }
+  const fetchReportTags = () => {
+    fetch('/api/reporttags')
+      .then((response) => response.json())
+      .then((data) => setReportTags(data))
+      .catch((error) => console.error('Error fetching report tags:', error))
+  }
+
+  const fetchRelatedData = async () => {
+    try {
+      const [reportsRes, tagsRes] = await Promise.all([
+        fetch('/api/reports'),
+        fetch('/api/tags'),
+      ])
+      const reportsData = await reportsRes.json()
+      const tagsData = await tagsRes.json()
+      setReports(reportsData)
+      setTags(tagsData)
+    } catch (error) {
+      console.error('Error fetching related data:', error)
     }
-    fetchData()
+  }
+
+  useEffect(() => {
+    fetchReportTags()
+    fetchRelatedData()
   }, [])
 
   const handleInputChange = (e) => {
@@ -51,29 +57,40 @@ const ReportTags = () => {
   }
 
   const handleAddReportTag = () => {
-    const reportTagData = {
-      reportid: parseInt(newReportTag.reportid, 10),
-      tagid: parseInt(newReportTag.tagid, 10),
-    }
-
     fetch('/api/reporttags', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(reportTagData),
+      body: JSON.stringify(newReportTag),
     })
-      .then((response) => response.json())
-      .then((addedReportTag) => {
-        if (addedReportTag.error) {
-          alert(`Error: ${addedReportTag.error}`)
-        } else {
-          fetch('/api/reporttags').then((res) => res.json()).then(setReportTags)
-          setVisible(false)
-          setNewReportTag({ reportid: '', tagid: '' })
+      .then((response) => {
+        if (!response.ok) {
+          return response.json().then(err => { throw new Error(err.error) })
         }
+        return response.json()
       })
-      .catch((error) => console.error('Error adding report tag:', error))
+      .then(() => {
+        fetchReportTags()
+        setVisible(false)
+        setNewReportTag({ reportid: '', tagid: '' })
+      })
+      .catch((error) => console.error('Error adding report tag:', error.message))
+  }
+
+  const handleDeleteReportTag = (reportid, tagid) => {
+    if (window.confirm('Are you sure you want to delete this report-tag relationship?')) {
+      fetch(`/api/reporttags/${reportid}/${tagid}`, {
+        method: 'DELETE',
+      })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Failed to delete report-tag relationship')
+          }
+          fetchReportTags()
+        })
+        .catch(error => console.error('Error deleting report-tag relationship:', error.message))
+    }
   }
 
   const reportNameMap = reports.reduce((acc, report) => ({ ...acc, [report.reportid]: report.name }), {})
@@ -83,7 +100,7 @@ const ReportTags = () => {
     <CContainer>
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h1>Report Tags</h1>
-        <CButton color="primary" onClick={() => setVisible(!visible)}>
+        <CButton color="primary" onClick={() => setVisible(true)}>
           Add Report Tag
         </CButton>
       </div>
@@ -92,6 +109,7 @@ const ReportTags = () => {
           <CTableRow>
             <CTableHeaderCell>Report</CTableHeaderCell>
             <CTableHeaderCell>Tag</CTableHeaderCell>
+            <CTableHeaderCell>Actions</CTableHeaderCell>
           </CTableRow>
         </CTableHead>
         <CTableBody>
@@ -99,6 +117,11 @@ const ReportTags = () => {
             <CTableRow key={`${rt.reportid}-${rt.tagid}-${index}`}>
               <CTableDataCell>{reportNameMap[rt.reportid] || rt.reportid}</CTableDataCell>
               <CTableDataCell>{tagNameMap[rt.tagid] || rt.tagid}</CTableDataCell>
+              <CTableDataCell>
+                <CButton color="danger" size="sm" onClick={() => handleDeleteReportTag(rt.reportid, rt.tagid)}>
+                  Delete
+                </CButton>
+              </CTableDataCell>
             </CTableRow>
           ))}
         </CTableBody>

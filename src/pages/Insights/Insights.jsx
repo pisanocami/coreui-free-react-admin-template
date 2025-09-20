@@ -22,63 +22,82 @@ const Insights = () => {
   const [insights, setInsights] = useState([])
   const [sections, setSections] = useState([])
   const [visible, setVisible] = useState(false)
-  const [newInsight, setNewInsight] = useState({
-    reportsectionid: '',
-    title: '',
-    type: '',
-    content: '',
-    position: '',
-    priority: '',
-  })
+  const [isEditMode, setIsEditMode] = useState(false)
+  const [currentInsight, setCurrentInsight] = useState({ reportsectionid: '', title: '', type: '', content: '', position: '', priority: '' })
+
+  const fetchInsights = () => {
+    fetch('/api/insights')
+      .then((response) => response.json())
+      .then((data) => setInsights(data))
+      .catch((error) => console.error('Error fetching insights:', error))
+  }
+
+  const fetchSections = () => {
+    fetch('/api/reportsections')
+      .then((response) => response.json())
+      .then((data) => setSections(data))
+      .catch((error) => console.error('Error fetching report sections:', error))
+  }
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [insightsRes, sectionsRes] = await Promise.all([
-          fetch('/api/insights'),
-          fetch('/api/reportsections'),
-        ])
-        const insightsData = await insightsRes.json()
-        const sectionsData = await sectionsRes.json()
-        setInsights(insightsData)
-        setSections(sectionsData)
-      } catch (error) {
-        console.error('Error fetching data:', error)
-      }
-    }
-    fetchData()
+    fetchInsights()
+    fetchSections()
   }, [])
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
-    setNewInsight({ ...newInsight, [name]: value })
+    setCurrentInsight({ ...currentInsight, [name]: value })
   }
 
-  const handleAddInsight = () => {
-    const insightData = {
-      ...newInsight,
-      reportsectionid: parseInt(newInsight.reportsectionid, 10),
-      position: newInsight.position ? parseInt(newInsight.position, 10) : null,
-    }
+  const handleSaveInsight = () => {
+    const method = isEditMode ? 'PUT' : 'POST'
+    const url = isEditMode ? `/api/insights/${currentInsight.insightid}` : '/api/insights'
 
-    fetch('/api/insights', {
-      method: 'POST',
+    fetch(url, {
+      method,
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(insightData),
+      body: JSON.stringify(currentInsight),
     })
-      .then((response) => response.json())
-      .then((addedInsight) => {
-        if (addedInsight.error) {
-          alert(`Error: ${addedInsight.error}`)
-        } else {
-          fetch('/api/insights').then((res) => res.json()).then(setInsights)
-          setVisible(false)
-          setNewInsight({ reportsectionid: '', title: '', type: '', content: '', position: '', priority: '' })
+      .then((response) => {
+        if (!response.ok) {
+          return response.json().then(err => { throw new Error(err.error) })
         }
+        return response.status === 204 ? null : response.json()
       })
-      .catch((error) => console.error('Error adding insight:', error))
+      .then(() => {
+        fetchInsights()
+        setVisible(false)
+      })
+      .catch((error) => console.error(`Error ${isEditMode ? 'updating' : 'adding'} insight:`, error.message))
+  }
+
+  const openModalForCreate = () => {
+    setIsEditMode(false)
+    setCurrentInsight({ reportsectionid: '', title: '', type: '', content: '', position: '', priority: '' })
+    setVisible(true)
+  }
+
+  const openModalForEdit = (insight) => {
+    setIsEditMode(true)
+    setCurrentInsight(insight)
+    setVisible(true)
+  }
+
+  const handleDeleteInsight = (insightid) => {
+    if (window.confirm('Are you sure you want to delete this insight?')) {
+      fetch(`/api/insights/${insightid}`, {
+        method: 'DELETE',
+      })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Failed to delete insight')
+          }
+          fetchInsights()
+        })
+        .catch(error => console.error('Error deleting insight:', error.message))
+    }
   }
 
   const sectionNameMap = sections.reduce((acc, section) => ({ ...acc, [section.sectionid]: section.sectionname }), {})
@@ -87,7 +106,7 @@ const Insights = () => {
     <CContainer>
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h1>Insights</h1>
-        <CButton color="primary" onClick={() => setVisible(!visible)}>
+        <CButton color="primary" onClick={openModalForCreate}>
           Add Insight
         </CButton>
       </div>
@@ -99,6 +118,7 @@ const Insights = () => {
             <CTableHeaderCell>Type</CTableHeaderCell>
             <CTableHeaderCell>Section</CTableHeaderCell>
             <CTableHeaderCell>Priority</CTableHeaderCell>
+            <CTableHeaderCell>Actions</CTableHeaderCell>
           </CTableRow>
         </CTableHead>
         <CTableBody>
@@ -109,6 +129,14 @@ const Insights = () => {
               <CTableDataCell>{insight.type}</CTableDataCell>
               <CTableDataCell>{sectionNameMap[insight.reportsectionid] || insight.reportsectionid}</CTableDataCell>
               <CTableDataCell>{insight.priority}</CTableDataCell>
+              <CTableDataCell>
+                <CButton color="light" size="sm" onClick={() => openModalForEdit(insight)} className="me-2">
+                  Edit
+                </CButton>
+                <CButton color="danger" size="sm" onClick={() => handleDeleteInsight(insight.insightid)}>
+                  Delete
+                </CButton>
+              </CTableDataCell>
             </CTableRow>
           ))}
         </CTableBody>
@@ -116,24 +144,24 @@ const Insights = () => {
 
       <CModal visible={visible} onClose={() => setVisible(false)} size="lg">
         <CModalHeader>
-          <CModalTitle>Add New Insight</CModalTitle>
+          <CModalTitle>{isEditMode ? 'Edit Insight' : 'Add New Insight'}</CModalTitle>
         </CModalHeader>
         <CModalBody>
           <CForm>
-            <CFormSelect name="reportsectionid" label="Report Section" value={newInsight.reportsectionid} onChange={handleInputChange} className="mb-3">
+            <CFormSelect name="reportsectionid" label="Report Section" value={currentInsight.reportsectionid || ''} onChange={handleInputChange} className="mb-3">
               <option>Select Section</option>
               {sections.map((s) => (<option key={s.sectionid} value={s.sectionid}>{s.sectionname}</option>))}
             </CFormSelect>
-            <CFormInput type="text" name="title" label="Title" value={newInsight.title} onChange={handleInputChange} className="mb-3" />
-            <CFormInput type="text" name="type" label="Type" value={newInsight.type} onChange={handleInputChange} className="mb-3" />
-            <CFormInput type="text" name="content" label="Content" value={newInsight.content} onChange={handleInputChange} className="mb-3" />
-            <CFormInput type="number" name="position" label="Position" value={newInsight.position} onChange={handleInputChange} className="mb-3" />
-            <CFormInput type="text" name="priority" label="Priority" value={newInsight.priority} onChange={handleInputChange} />
+            <CFormInput type="text" name="title" label="Title" value={currentInsight.title || ''} onChange={handleInputChange} className="mb-3" />
+            <CFormInput type="text" name="type" label="Type" value={currentInsight.type || ''} onChange={handleInputChange} className="mb-3" />
+            <CFormInput type="text" name="content" label="Content" value={currentInsight.content || ''} onChange={handleInputChange} className="mb-3" />
+            <CFormInput type="number" name="position" label="Position" value={currentInsight.position || ''} onChange={handleInputChange} className="mb-3" />
+            <CFormInput type="text" name="priority" label="Priority" value={currentInsight.priority || ''} onChange={handleInputChange} />
           </CForm>
         </CModalBody>
         <CModalFooter>
           <CButton color="secondary" onClick={() => setVisible(false)}>Close</CButton>
-          <CButton color="primary" onClick={handleAddInsight}>Save Insight</CButton>
+          <CButton color="primary" onClick={handleSaveInsight}>{isEditMode ? 'Update Insight' : 'Save Insight'}</CButton>
         </CModalFooter>
       </CModal>
     </CContainer>

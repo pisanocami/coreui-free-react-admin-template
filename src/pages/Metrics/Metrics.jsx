@@ -20,42 +20,81 @@ import {
 const Metrics = () => {
   const [metrics, setMetrics] = useState([])
   const [visible, setVisible] = useState(false)
-  const [newMetric, setNewMetric] = useState({ name: '', unit: '', description: '', category: '' })
+  const [isEditMode, setIsEditMode] = useState(false)
+  const [currentMetric, setCurrentMetric] = useState({ name: '', description: '', type: '' })
 
-  useEffect(() => {
+  const fetchMetrics = () => {
     fetch('/api/metrics')
       .then((response) => response.json())
       .then((data) => setMetrics(data))
       .catch((error) => console.error('Error fetching metrics:', error))
+  }
+
+  useEffect(() => {
+    fetchMetrics()
   }, [])
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
-    setNewMetric({ ...newMetric, [name]: value })
+    setCurrentMetric({ ...currentMetric, [name]: value })
   }
 
-  const handleAddMetric = () => {
-    fetch('/api/metrics', {
-      method: 'POST',
+  const handleSaveMetric = () => {
+    const method = isEditMode ? 'PUT' : 'POST'
+    const url = isEditMode ? `/api/metrics/${currentMetric.metricid}` : '/api/metrics'
+
+    fetch(url, {
+      method,
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(newMetric),
+      body: JSON.stringify(currentMetric),
     })
-      .then((response) => response.json())
-      .then((addedMetric) => {
-        setMetrics([...metrics, addedMetric])
-        setVisible(false)
-        setNewMetric({ name: '', unit: '', description: '', category: '' })
+      .then((response) => {
+        if (!response.ok) {
+          return response.json().then(err => { throw new Error(err.error) })
+        }
+        return response.status === 204 ? null : response.json()
       })
-      .catch((error) => console.error('Error adding metric:', error))
+      .then(() => {
+        fetchMetrics()
+        setVisible(false)
+      })
+      .catch((error) => console.error(`Error ${isEditMode ? 'updating' : 'adding'} metric:`, error.message))
+  }
+
+  const openModalForCreate = () => {
+    setIsEditMode(false)
+    setCurrentMetric({ name: '', description: '', type: '' })
+    setVisible(true)
+  }
+
+  const openModalForEdit = (metric) => {
+    setIsEditMode(true)
+    setCurrentMetric(metric)
+    setVisible(true)
+  }
+
+  const handleDeleteMetric = (metricid) => {
+    if (window.confirm('Are you sure you want to delete this metric?')) {
+      fetch(`/api/metrics/${metricid}`, {
+        method: 'DELETE',
+      })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Failed to delete metric')
+          }
+          fetchMetrics()
+        })
+        .catch(error => console.error('Error deleting metric:', error.message))
+    }
   }
 
   return (
     <CContainer>
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h1>Metrics</h1>
-        <CButton color="primary" onClick={() => setVisible(!visible)}>
+        <CButton color="primary" onClick={openModalForCreate}>
           Add Metric
         </CButton>
       </div>
@@ -64,9 +103,9 @@ const Metrics = () => {
           <CTableRow>
             <CTableHeaderCell>ID</CTableHeaderCell>
             <CTableHeaderCell>Name</CTableHeaderCell>
-            <CTableHeaderCell>Unit</CTableHeaderCell>
+            <CTableHeaderCell>Type</CTableHeaderCell>
             <CTableHeaderCell>Description</CTableHeaderCell>
-            <CTableHeaderCell>Category</CTableHeaderCell>
+            <CTableHeaderCell>Actions</CTableHeaderCell>
           </CTableRow>
         </CTableHead>
         <CTableBody>
@@ -74,9 +113,16 @@ const Metrics = () => {
             <CTableRow key={metric.metricid}>
               <CTableDataCell>{metric.metricid}</CTableDataCell>
               <CTableDataCell>{metric.name}</CTableDataCell>
-              <CTableDataCell>{metric.unit}</CTableDataCell>
+              <CTableDataCell>{metric.type}</CTableDataCell>
               <CTableDataCell>{metric.description}</CTableDataCell>
-              <CTableDataCell>{metric.category}</CTableDataCell>
+              <CTableDataCell>
+                <CButton color="light" size="sm" onClick={() => openModalForEdit(metric)} className="me-2">
+                  Edit
+                </CButton>
+                <CButton color="danger" size="sm" onClick={() => handleDeleteMetric(metric.metricid)}>
+                  Delete
+                </CButton>
+              </CTableDataCell>
             </CTableRow>
           ))}
         </CTableBody>
@@ -84,7 +130,7 @@ const Metrics = () => {
 
       <CModal visible={visible} onClose={() => setVisible(false)}>
         <CModalHeader>
-          <CModalTitle>Add New Metric</CModalTitle>
+          <CModalTitle>{isEditMode ? 'Edit Metric' : 'Add New Metric'}</CModalTitle>
         </CModalHeader>
         <CModalBody>
           <CForm>
@@ -92,17 +138,15 @@ const Metrics = () => {
               type="text"
               name="name"
               label="Name"
-              placeholder="Enter metric name"
-              value={newMetric.name}
+              value={currentMetric.name || ''}
               onChange={handleInputChange}
               className="mb-3"
             />
             <CFormInput
               type="text"
-              name="unit"
-              label="Unit"
-              placeholder="Enter unit"
-              value={newMetric.unit}
+              name="type"
+              label="Type"
+              value={currentMetric.type || ''}
               onChange={handleInputChange}
               className="mb-3"
             />
@@ -110,17 +154,7 @@ const Metrics = () => {
               type="text"
               name="description"
               label="Description"
-              placeholder="Enter description"
-              value={newMetric.description}
-              onChange={handleInputChange}
-              className="mb-3"
-            />
-            <CFormInput
-              type="text"
-              name="category"
-              label="Category"
-              placeholder="Enter category"
-              value={newMetric.category}
+              value={currentMetric.description || ''}
               onChange={handleInputChange}
             />
           </CForm>
@@ -129,8 +163,8 @@ const Metrics = () => {
           <CButton color="secondary" onClick={() => setVisible(false)}>
             Close
           </CButton>
-          <CButton color="primary" onClick={handleAddMetric}>
-            Save Metric
+          <CButton color="primary" onClick={handleSaveMetric}>
+            {isEditMode ? 'Update Metric' : 'Save Metric'}
           </CButton>
         </CModalFooter>
       </CModal>
