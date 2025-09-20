@@ -4,6 +4,9 @@ import express from 'express';
 const app = express();
 const port = process.env.PORT || 3001;
 
+// Middleware to parse JSON bodies
+app.use(express.json());
+
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
@@ -21,6 +24,35 @@ app.get('/api/clients', async (req, res) => {
   } catch (error) {
     console.error('Error fetching clients:', error);
     res.status(500).json({ error: 'Failed to fetch clients' });
+  }
+});
+
+app.post('/api/clients', async (req, res) => {
+  try {
+    const { name, industry, maincontact } = req.body;
+
+    // Basic validation
+    if (!name || !industry || !maincontact) {
+      return res.status(400).json({ error: 'Name, industry, and maincontact are required' });
+    }
+
+    console.log('Creating new client:', { name, industry });
+
+    const newClient = await db
+      .insert(client)
+      .values({
+        name,
+        industry,
+        maincontact,
+        status: 'active', // Default status
+      })
+      .returning(); // Return the newly created record
+
+    console.log('Client created successfully:', newClient[0]);
+    res.status(201).json(newClient[0]);
+  } catch (error) {
+    console.error('Error creating client:', error);
+    res.status(500).json({ error: 'Failed to create client' });
   }
 });
 

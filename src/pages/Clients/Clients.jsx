@@ -11,6 +11,7 @@ import {
   CTableHead,
   CTableHeaderCell,
   CTableRow,
+  CButton,
 } from '@coreui/react';
 
 const Clients = () => {
@@ -43,7 +44,14 @@ const Clients = () => {
       <CCol xs={12}>
         <CCard className="mb-4">
           <CCardHeader>
-            <strong>Clients</strong> <small>from Neon DB</small>
+            <div className="d-flex justify-content-between align-items-center">
+              <span>
+                <strong>Clients</strong> <small>from Neon DB</small>
+              </span>
+              <CButton color="primary" onClick={() => alert('Form to create client will be here!')}>
+                Add Client
+              </CButton>
+            </div>
           </CCardHeader>
           <CCardBody>
             {loading && <p>Loading clients...</p>}
