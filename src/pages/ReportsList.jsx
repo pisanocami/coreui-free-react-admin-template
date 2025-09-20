@@ -1,6 +1,6 @@
 // ReportsList.jsx - Listado de reportes disponibles
-import React, { useMemo } from 'react'
-import { CContainer, CRow, CCol, CCard, CCardBody, CCardHeader, CCardTitle, CButton, CListGroup, CListGroupItem, CAlert } from '@coreui/react'
+import React, { useMemo, useState, useEffect } from 'react'
+import { CContainer, CRow, CCol, CCard, CCardBody, CCardHeader, CCardTitle, CButton, CListGroup, CListGroupItem, CAlert, CFormSelect } from '@coreui/react'
 import { CIcon } from '@coreui/icons-react'
 import { cilDescription, cilChartLine, cilBuilding, cilUser, cilArrowLeft } from '@coreui/icons'
 import { useNavigate, Link } from 'react-router-dom'
@@ -9,6 +9,16 @@ import { useTemplatesModel } from '../hooks/useTemplatesModel'
 const ReportsList = () => {
   const { reports, templates } = useTemplatesModel()
   const navigate = useNavigate()
+
+  // Selector de template para creación rápida
+  const [selectedTemplateId, setSelectedTemplateId] = useState(templates[0]?.id || '')
+  useEffect(() => {
+    if (!templates?.length) {
+      setSelectedTemplateId('')
+    } else if (!selectedTemplateId || !templates.some(t => t.id === selectedTemplateId)) {
+      setSelectedTemplateId(templates[0].id)
+    }
+  }, [templates])
 
   // Mock reports data - these are always available
   const mockReports = useMemo(() => [
@@ -93,6 +103,34 @@ const ReportsList = () => {
         <CCol>
           <h1 className="h3">Reportes Disponibles</h1>
           <p className="text-medium-emphasis">Explora y accede a todos los reportes de análisis disponibles en el sistema.</p>
+        </CCol>
+        <CCol xs="12" sm="auto" className="text-sm-end d-flex gap-2 align-items-center mt-2 mt-sm-0">
+          <CFormSelect
+            size="sm"
+            value={selectedTemplateId}
+            onChange={(e) => setSelectedTemplateId(e.target.value)}
+            aria-label="Seleccionar template para crear reporte"
+            disabled={!templates?.length}
+          >
+            {templates?.length ? (
+              templates.map(t => (
+                <option key={t.id} value={t.id}>{t.name}</option>
+              ))
+            ) : (
+              <option value="">No hay templates</option>
+            )}
+          </CFormSelect>
+          <CButton
+            color="primary"
+            disabled={!selectedTemplateId}
+            onClick={() => {
+              if (!selectedTemplateId) return
+              // Navegamos al builder de Report para ese template; allí se creará automáticamente si no existe
+              navigate(`/report/${selectedTemplateId}`)
+            }}
+          >
+            Crear reporte
+          </CButton>
         </CCol>
       </CRow>
 
