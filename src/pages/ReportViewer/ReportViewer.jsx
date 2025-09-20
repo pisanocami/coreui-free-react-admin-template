@@ -207,7 +207,19 @@ const ReportViewer = () => {
               <ul className="list-unstyled">
                 {toc.map((t) => (
                   <li key={t.id} className="mb-1" style={{ marginLeft: (t.level - 1) * 8 }}>
-                    <a href={`#${t.id}`} className="text-decoration-none">{t.label}</a>
+                    <a
+                      href="#!"
+                      className="text-decoration-none"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        const el = document.getElementById(t.id)
+                        if (el) {
+                          el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                        }
+                      }}
+                    >
+                      {t.label}
+                    </a>
                   </li>
                 ))}
               </ul>
