@@ -32,8 +32,13 @@ const _nav = [
   },
 ]
 
-// Show admin links only in development to avoid clutter in production
-if (import.meta && import.meta.env && import.meta.env.DEV) {
+// Show admin links in development OR when explicitly enabled via env
+// To enable in production, set VITE_SHOW_ADMIN=true in the environment
+const showAdmin =
+  (import.meta && import.meta.env && import.meta.env.DEV) ||
+  (import.meta && import.meta.env && import.meta.env.VITE_SHOW_ADMIN === 'true')
+
+if (showAdmin) {
   _nav.push(
     { component: CNavTitle, name: 'Administración' },
     {
