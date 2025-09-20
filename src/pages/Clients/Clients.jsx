@@ -49,8 +49,39 @@ const Clients = () => {
     fetchClients();
   }, []); // Empty dependency array means this effect runs once on mount
 
+  const handleSaveClient = async () => {
+    try {
+      const response = await fetch('/api/clients', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newClient),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create client');
+      }
+
+      const createdClient = await response.json();
+
+      // Add the new client to the top of the list
+      setClients([createdClient, ...clients]);
+
+      // Reset form and close modal
+      setNewClient({ name: '', industry: '', maincontact: '' });
+      setModalVisible(false);
+
+    } catch (e) {
+      // You might want to show this error in the modal
+      setError(e.message);
+      console.error('Save client error:', e);
+    }
+  };
+
   return (
-    <CRow>
+    <>
+      <CRow>
       <CCol xs={12}>
         <CCard className="mb-4">
           <CCardHeader>
@@ -58,7 +89,7 @@ const Clients = () => {
               <span>
                 <strong>Clients</strong> <small>from Neon DB</small>
               </span>
-              <CButton color="primary" onClick={() => alert('Form to create client will be here!')}>
+              <CButton color="primary" onClick={() => setModalVisible(true)} >
                 Add Client
               </CButton>
             </div>
@@ -93,6 +124,50 @@ const Clients = () => {
         </CCard>
       </CCol>
     </CRow>
+
+    <CModal visible={isModalVisible} onClose={() => setModalVisible(false)}>
+      <CModalHeader onClose={() => setModalVisible(false)}>
+        <CModalTitle>Add New Client</CModalTitle>
+      </CModalHeader>
+      <CModalBody>
+        <CForm>
+          <div className="mb-3">
+            <CFormLabel htmlFor="clientName">Name</CFormLabel>
+            <CFormInput
+              type="text"
+              id="clientName"
+              value={newClient.name}
+              onChange={(e) => setNewClient({ ...newClient, name: e.target.value })}
+            />
+          </div>
+          <div className="mb-3">
+            <CFormLabel htmlFor="clientIndustry">Industry</CFormLabel>
+            <CFormInput
+              type="text"
+              id="clientIndustry"
+              value={newClient.industry}
+              onChange={(e) => setNewClient({ ...newClient, industry: e.target.value })}
+            />
+          </div>
+          <div className="mb-3">
+            <CFormLabel htmlFor="clientContact">Main Contact</CFormLabel>
+            <CFormInput
+              type="text"
+              id="clientContact"
+              value={newClient.maincontact}
+              onChange={(e) => setNewClient({ ...newClient, maincontact: e.target.value })}
+            />
+          </div>
+        </CForm>
+      </CModalBody>
+      <CModalFooter>
+        <CButton color="secondary" onClick={() => setModalVisible(false)}>
+          Cancel
+        </CButton>
+        <CButton color="primary" onClick={handleSaveClient}>Save Client</CButton>
+      </CModalFooter>
+    </CModal>
+    </>
   );
 };
 
