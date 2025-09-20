@@ -30,6 +30,20 @@ const _nav = [
     to: '/profile',
     icon: <CIcon icon={cilStar} customClassName="nav-icon" />,
   },
+  // Administración (siempre visible)
+  { component: CNavTitle, name: 'Administración' },
+  {
+    component: CNavItem,
+    name: 'Plantillas',
+    to: '/templates',
+    icon: <CIcon icon={cilDescription} customClassName="nav-icon" />,
+  },
+  {
+    component: CNavItem,
+    name: 'Secciones',
+    to: '/sections',
+    icon: <CIcon icon={cilDescription} customClassName="nav-icon" />,
+  },
 ]
 
 // Show admin links in development OR when explicitly enabled via env
@@ -40,19 +54,6 @@ const showAdmin =
 
 if (showAdmin) {
   _nav.push(
-    { component: CNavTitle, name: 'Administración' },
-    {
-      component: CNavItem,
-      name: 'Plantillas',
-      to: '/templates',
-      icon: <CIcon icon={cilDescription} customClassName="nav-icon" />,
-    },
-    {
-      component: CNavItem,
-      name: 'Secciones',
-      to: '/sections',
-      icon: <CIcon icon={cilDescription} customClassName="nav-icon" />,
-    },
     {
       component: CNavItem,
       name: 'Mock Reports',
