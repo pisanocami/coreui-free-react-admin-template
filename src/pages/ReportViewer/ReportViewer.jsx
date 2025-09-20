@@ -122,6 +122,7 @@ const ReportViewer = () => {
 
   // Map index -> fetched markdown HTML when s.link ends with .md
   const [mdMap, setMdMap] = useState({})
+  const [activeTocId, setActiveTocId] = useState(null)
 
   useEffect(() => {
     let cancelled = false
@@ -146,6 +147,31 @@ const ReportViewer = () => {
     setMdMap({})
     if (sections.length) loadMd()
     return () => { cancelled = true }
+  }, [sections])
+
+  // Scroll spy: highlight TOC item for section in view
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setActiveTocId(entry.target.id)
+          }
+        })
+      },
+      {
+        root: null,
+        // Trigger when the section top crosses upper half of viewport
+        rootMargin: '-40% 0px -50% 0px',
+        threshold: 0.1,
+      }
+    )
+    // Observe all section anchors
+    sections.forEach((_, idx) => {
+      const el = document.getElementById(`sec-${idx}`)
+      if (el) observer.observe(el)
+    })
+    return () => observer.disconnect()
   }, [sections])
 
   // If non-mock, ensure we select the right report in model but do not show editor UI
@@ -205,23 +231,27 @@ const ReportViewer = () => {
             <nav aria-label="Tabla de contenidos" className="position-sticky" style={{ top: 16 }}>
               <div className="small text-body-secondary mb-2">Tabla de contenidos</div>
               <ul className="list-unstyled">
-                {toc.map((t) => (
-                  <li key={t.id} className="mb-1" style={{ marginLeft: (t.level - 1) * 8 }}>
-                    <a
-                      href="#!"
-                      className="text-decoration-none"
-                      onClick={(e) => {
-                        e.preventDefault()
-                        const el = document.getElementById(t.id)
-                        if (el) {
-                          el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                        }
-                      }}
-                    >
-                      {t.label}
-                    </a>
-                  </li>
-                ))}
+                {toc.map((t) => {
+                  const isActive = activeTocId === t.id
+                  return (
+                    <li key={t.id} className="mb-1" style={{ marginLeft: (t.level - 1) * 8 }}>
+                      <a
+                        href="#!"
+                        className={`text-decoration-none ${isActive ? 'fw-bold text-primary' : ''}`}
+                        aria-current={isActive ? 'true' : undefined}
+                        onClick={(e) => {
+                          e.preventDefault()
+                          const el = document.getElementById(t.id)
+                          if (el) {
+                            el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                          }
+                        }}
+                      >
+                        {t.label}
+                      </a>
+                    </li>
+                  )
+                })}
               </ul>
             </nav>
           </CCol>
