@@ -330,7 +330,7 @@ const ReportView = () => {
                       <h5>Resumen Ejecutivo</h5>
                       <CCard>
                         <CCardBody>
-                          <p>Contenido del resumen ejecutivo del reporte</p>
+                          <p>{reportData.report.summary || 'No hay resumen disponible'}</p>
                         </CCardBody>
                       </CCard>
                     </div>
@@ -339,7 +339,16 @@ const ReportView = () => {
                       <h5>Información General</h5>
                       <CCard>
                         <CCardBody>
-                          <p>Contenido de información general del reporte</p>
+                          <CRow>
+                            <CCol md={6}>
+                              <p><strong>Cliente:</strong> {reportData.report.clientName || 'N/A'}</p>
+                              <p><strong>Vertical:</strong> {reportData.report.verticalName || 'N/A'}</p>
+                            </CCol>
+                            <CCol md={6}>
+                              <p><strong>Fecha de Creación:</strong> {formatDate(reportData.report.createdat)}</p>
+                              <p><strong>Última Actualización:</strong> {formatDate(reportData.report.updatedat)}</p>
+                            </CCol>
+                          </CRow>
                         </CCardBody>
                       </CCard>
                     </div>
@@ -349,21 +358,53 @@ const ReportView = () => {
                   <CTabPane visible={activeCentralTab === 'secciones'}>
                     <div className="mb-4">
                       <h5>Secciones del Reporte</h5>
-                      <CCard>
-                        <CCardBody>
-                          <p>Contenido de secciones del reporte</p>
-                        </CCardBody>
-                      </CCard>
+                      {reportData.sections.map((section, index) => (
+                        <CCard key={section.sectionid} className="mb-3">
+                          <CCardBody>
+                            <h6>{section.sectionname}</h6>
+                            <p>{section.description || 'No hay descripción disponible'}</p>
+                            <CButton 
+                              color="link" 
+                              onClick={() => setActiveTab(index)}
+                            >
+                              Ver detalles
+                            </CButton>
+                          </CCardBody>
+                        </CCard>
+                      ))}
                     </div>
                   </CTabPane>
                   
                   {/* Contenido de KPIs */}
                   <CTabPane visible={activeCentralTab === 'kpis'}>
                     <div className="mb-4">
-                      <h5>KPIs del Reporte</h5>
+                      <h5>KPIs Principales</h5>
+                      <CCard className="mb-4">
+                        <CCardBody>
+                          <CRow>
+                            <CCol md={6}>
+                              <h6>Visitas Mensuales</h6>
+                              <p>{reportData.report.monthlyVisits || 'N/A'}</p>
+                            </CCol>
+                            <CCol md={6}>
+                              <h6>Crecimiento YoY</h6>
+                              <p>{reportData.report.yoyGrowth || 'N/A'}</p>
+                            </CCol>
+                          </CRow>
+                        </CCardBody>
+                      </CCard>
+                      
+                      <h5>Matriz Competitiva</h5>
+                      <CCard className="mb-4">
+                        <CCardBody>
+                          <p>{reportData.report.competitiveMatrix || 'No hay matriz competitiva disponible'}</p>
+                        </CCardBody>
+                      </CCard>
+                      
+                      <h5>Líneas de Tiempo</h5>
                       <CCard>
                         <CCardBody>
-                          <p>Contenido de KPIs del reporte</p>
+                          <p>{reportData.report.timeline || 'No hay líneas de tiempo disponibles'}</p>
                         </CCardBody>
                       </CCard>
                     </div>
@@ -372,10 +413,17 @@ const ReportView = () => {
                   {/* Contenido de Competencia */}
                   <CTabPane visible={activeCentralTab === 'competencia'}>
                     <div className="mb-4">
-                      <h5>Análisis de Competencia</h5>
+                      <h5>Ranking Competidor</h5>
+                      <CCard className="mb-4">
+                        <CCardBody>
+                          <p>{reportData.report.competitorRanking || 'No hay ranking de competidores disponible'}</p>
+                        </CCardBody>
+                      </CCard>
+                      
+                      <h5>Visualizaciones</h5>
                       <CCard>
                         <CCardBody>
-                          <p>Contenido de análisis de competencia</p>
+                          <p>{reportData.report.competitiveVisualizations || 'No hay visualizaciones disponibles'}</p>
                         </CCardBody>
                       </CCard>
                     </div>
@@ -392,7 +440,7 @@ const ReportView = () => {
                     <h5>Tablas exportables</h5>
                     <CCard>
                       <CCardBody>
-                        <p>Contenido de tablas exportables</p>
+                        <p>{reportData.report.exportableTables || 'No hay tablas exportables disponibles'}</p>
                       </CCardBody>
                     </CCard>
                   </CCol>
@@ -400,7 +448,7 @@ const ReportView = () => {
                     <h5>Ranking Competidor</h5>
                     <CCard>
                       <CCardBody>
-                        <p>Contenido de ranking competidor</p>
+                        <p>{reportData.report.competitorRankingDetails || 'No hay detalles de ranking competidor'}</p>
                       </CCardBody>
                     </CCard>
                   </CCol>
@@ -416,7 +464,12 @@ const ReportView = () => {
                 <h5>Insights Clave</h5>
               </CCardHeader>
               <CCardBody>
-                <p>Contenido de insights clave</p>
+                {reportData.sections.flatMap(section => section.insights).slice(0, 5).map((insight, index) => (
+                  <div key={index} className="mb-3">
+                    <h6>{insight.title}</h6>
+                    <p>{insight.content}</p>
+                  </div>
+                ))}
               </CCardBody>
             </CCard>
             
@@ -425,7 +478,7 @@ const ReportView = () => {
                 <h5>Comentarios</h5>
               </CCardHeader>
               <CCardBody>
-                <p>Contenido de comentarios</p>
+                <p>{reportData.report.comments || 'No hay comentarios disponibles'}</p>
               </CCardBody>
             </CCard>
             
@@ -434,7 +487,7 @@ const ReportView = () => {
                 <h5>Historial</h5>
               </CCardHeader>
               <CCardBody>
-                <p>Contenido de historial</p>
+                <p>{reportData.report.history || 'No hay historial disponible'}</p>
               </CCardBody>
             </CCard>
             
@@ -443,7 +496,7 @@ const ReportView = () => {
                 <h5>Citaciones</h5>
               </CCardHeader>
               <CCardBody>
-                <p>Contenido de citaciones</p>
+                <p>{reportData.report.citations || 'No hay citaciones disponibles'}</p>
               </CCardBody>
             </CCard>
             
@@ -452,7 +505,14 @@ const ReportView = () => {
                 <h5>Medios</h5>
               </CCardHeader>
               <CCardBody>
-                <p>Contenido de medios</p>
+                {reportData.sections.flatMap(section => section.media).slice(0, 3).map((media, index) => (
+                  <div key={index} className="mb-2">
+                    <p><strong>{media.caption}</strong></p>
+                    <a href={media.url} target="_blank" rel="noopener noreferrer">
+                      {media.type}: {media.url}
+                    </a>
+                  </div>
+                ))}
               </CCardBody>
             </CCard>
             
@@ -461,7 +521,7 @@ const ReportView = () => {
                 <h5>Adjuntos</h5>
               </CCardHeader>
               <CCardBody>
-                <p>Contenido de adjuntos</p>
+                <p>{reportData.report.attachments || 'No hay adjuntos disponibles'}</p>
               </CCardBody>
             </CCard>
             
@@ -470,7 +530,44 @@ const ReportView = () => {
                 <h5>Preview</h5>
               </CCardHeader>
               <CCardBody>
-                <p>Contenido de preview</p>
+                <p>{reportData.report.preview || 'No hay preview disponible'}</p>
+              </CCardBody>
+            </CCard>
+          </CCol>
+        </CRow>
+      )}
+      
+      {/* Barra inferior */}
+      {reportData && (
+        <CRow className="mt-4">
+          <CCol xs={12}>
+            <CCard>
+              <CCardBody>
+                <CRow>
+                  <CCol md={3}>
+                    <h5>Miembros</h5>
+                    <p>{reportData.report.members || 'No hay miembros asignados'}</p>
+                  </CCol>
+                  <CCol md={3}>
+                    <h5>Permisos</h5>
+                    <p>{reportData.report.permissions || 'Permisos no definidos'}</p>
+                  </CCol>
+                  <CCol md={3}>
+                    <h5>Exportaciones</h5>
+                    <CButton color="primary" variant="outline" size="sm" className="me-2">
+                      Exportar PDF
+                    </CButton>
+                    <CButton color="primary" variant="outline" size="sm">
+                      Exportar JSON
+                    </CButton>
+                  </CCol>
+                  <CCol md={3}>
+                    <h5>Ayuda/Contexto</h5>
+                    <CButton color="secondary" variant="outline" size="sm">
+                      Ver documentación
+                    </CButton>
+                  </CCol>
+                </CRow>
               </CCardBody>
             </CCard>
           </CCol>
