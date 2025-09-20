@@ -64,7 +64,10 @@ export default defineConfig(() => {
         'Cross-Origin-Resource-Policy': 'cross-origin'
       },
       proxy: {
-        // https://vitejs.dev/config/server-options.html
+        '/api': {
+          target: 'http://localhost:3001',
+          changeOrigin: true,
+        },
       },
     },
   }

@@ -14,7 +14,7 @@
   "author": "The CoreUI Team (https://github.com/orgs/coreui/people)",
   "scripts": {
     "build": "vite build",
-    "db:introspect": "drizzle-kit introspect:pg",
+    "db:introspect": "drizzle-kit introspect",
     "lint": "eslint",
     "serve": "vite preview",
     "start": "vite"

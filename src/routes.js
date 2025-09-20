@@ -12,6 +12,7 @@ const ReportsList = React.lazy(() => import('./pages/ReportsList'))
 const TemplatesAdmin = React.lazy(() => import('./pages/Templates/Templates'))
 const SectionsAdmin = React.lazy(() => import('./pages/Sections/Sections'))
 const AdminMockReports = React.lazy(() => import('./pages/AdminMockReports'))
+const Clients = React.lazy(() => import('./pages/Clients/Clients'))
 
 const routes = [
   { path: '/', exact: true, name: 'Home' },
@@ -27,6 +28,7 @@ const routes = [
   { path: '/templates', name: 'Templates Admin', element: TemplatesAdmin },
   { path: '/sections', name: 'Sections Admin', element: SectionsAdmin },
   { path: '/admin/mock-reports', name: 'Mock Reports', element: AdminMockReports },
+  { path: '/clients', name: 'Clients', element: Clients },
 ]
 
 export default routes

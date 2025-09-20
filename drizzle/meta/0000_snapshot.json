@@ -1,0 +1,1328 @@
+{
+  "id": "00000000-0000-0000-0000-000000000000",
+  "prevId": "",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.entity": {
+      "name": "entity",
+      "schema": "",
+      "columns": {
+        "entityid": {
+          "name": "entityid",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "domain": {
+          "name": "domain",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.competitor": {
+      "name": "competitor",
+      "schema": "",
+      "columns": {
+        "competitorid": {
+          "name": "competitorid",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "domain": {
+          "name": "domain",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "industry": {
+          "name": "industry",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdat": {
+          "name": "createdat",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.metricvalue": {
+      "name": "metricvalue",
+      "schema": "",
+      "columns": {
+        "valueid": {
+          "name": "valueid",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "metricid": {
+          "name": "metricid",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "entityid": {
+          "name": "entityid",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reportid": {
+          "name": "reportid",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "periodtype": {
+          "name": "periodtype",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "periodvalue": {
+          "name": "periodvalue",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "value": {
+          "name": "value",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "additionalinfo": {
+          "name": "additionalinfo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdat": {
+          "name": "createdat",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "idx_metric_value_entity": {
+          "name": "idx_metric_value_entity",
+          "columns": [
+            {
+              "expression": "entityid",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_metric_value_report": {
+          "name": "idx_metric_value_report",
+          "columns": [
+            {
+              "expression": "reportid",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "metricvalue_metricid_fkey": {
+          "name": "metricvalue_metricid_fkey",
+          "tableFrom": "metricvalue",
+          "tableTo": "metric",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "metricid"
+          ],
+          "columnsTo": [
+            "metricid"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "metricvalue_entityid_fkey": {
+          "name": "metricvalue_entityid_fkey",
+          "tableFrom": "metricvalue",
+          "tableTo": "entity",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "entityid"
+          ],
+          "columnsTo": [
+            "entityid"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "metricvalue_reportid_fkey": {
+          "name": "metricvalue_reportid_fkey",
+          "tableFrom": "metricvalue",
+          "tableTo": "report",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "reportid"
+          ],
+          "columnsTo": [
+            "reportid"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.socialprofile": {
+      "name": "socialprofile",
+      "schema": "",
+      "columns": {
+        "profileid": {
+          "name": "profileid",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "entityid": {
+          "name": "entityid",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "platform": {
+          "name": "platform",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "url": {
+          "name": "url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "followers": {
+          "name": "followers",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "lastupdated": {
+          "name": "lastupdated",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "socialprofile_entityid_fkey": {
+          "name": "socialprofile_entityid_fkey",
+          "tableFrom": "socialprofile",
+          "tableTo": "entity",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "entityid"
+          ],
+          "columnsTo": [
+            "entityid"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.review": {
+      "name": "review",
+      "schema": "",
+      "columns": {
+        "reviewid": {
+          "name": "reviewid",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "entityid": {
+          "name": "entityid",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reportid": {
+          "name": "reportid",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ispositive": {
+          "name": "ispositive",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reviewsource": {
+          "name": "reviewsource",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "content": {
+          "name": "content",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "mentionedproduct": {
+          "name": "mentionedproduct",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "rating": {
+          "name": "rating",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reviewdate": {
+          "name": "reviewdate",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdat": {
+          "name": "createdat",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "review_entityid_fkey": {
+          "name": "review_entityid_fkey",
+          "tableFrom": "review",
+          "tableTo": "entity",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "entityid"
+          ],
+          "columnsTo": [
+            "entityid"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "review_reportid_fkey": {
+          "name": "review_reportid_fkey",
+          "tableFrom": "review",
+          "tableTo": "report",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "reportid"
+          ],
+          "columnsTo": [
+            "reportid"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.insight": {
+      "name": "insight",
+      "schema": "",
+      "columns": {
+        "insightid": {
+          "name": "insightid",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "reportsectionid": {
+          "name": "reportsectionid",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "title": {
+          "name": "title",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "type": {
+          "name": "type",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "content": {
+          "name": "content",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "priority": {
+          "name": "priority",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdat": {
+          "name": "createdat",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "insight_reportsectionid_fkey": {
+          "name": "insight_reportsectionid_fkey",
+          "tableFrom": "insight",
+          "tableTo": "reportsection",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "reportsectionid"
+          ],
+          "columnsTo": [
+            "sectionid"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.adcreative": {
+      "name": "adcreative",
+      "schema": "",
+      "columns": {
+        "adid": {
+          "name": "adid",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "entityid": {
+          "name": "entityid",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reportid": {
+          "name": "reportid",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "format": {
+          "name": "format",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "campaign": {
+          "name": "campaign",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "creativeurl": {
+          "name": "creativeurl",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "performancenotes": {
+          "name": "performancenotes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "adplatform": {
+          "name": "adplatform",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdat": {
+          "name": "createdat",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "adcreative_entityid_fkey": {
+          "name": "adcreative_entityid_fkey",
+          "tableFrom": "adcreative",
+          "tableTo": "entity",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "entityid"
+          ],
+          "columnsTo": [
+            "entityid"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "adcreative_reportid_fkey": {
+          "name": "adcreative_reportid_fkey",
+          "tableFrom": "adcreative",
+          "tableTo": "report",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "reportid"
+          ],
+          "columnsTo": [
+            "reportid"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.reportmedia": {
+      "name": "reportmedia",
+      "schema": "",
+      "columns": {
+        "mediaid": {
+          "name": "mediaid",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "reportid": {
+          "name": "reportid",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sectionid": {
+          "name": "sectionid",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "type": {
+          "name": "type",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "url": {
+          "name": "url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "caption": {
+          "name": "caption",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "filesize": {
+          "name": "filesize",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdat": {
+          "name": "createdat",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "reportmedia_reportid_fkey": {
+          "name": "reportmedia_reportid_fkey",
+          "tableFrom": "reportmedia",
+          "tableTo": "report",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "reportid"
+          ],
+          "columnsTo": [
+            "reportid"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "reportmedia_sectionid_fkey": {
+          "name": "reportmedia_sectionid_fkey",
+          "tableFrom": "reportmedia",
+          "tableTo": "reportsection",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "sectionid"
+          ],
+          "columnsTo": [
+            "sectionid"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.vertical": {
+      "name": "vertical",
+      "schema": "",
+      "columns": {
+        "verticalid": {
+          "name": "verticalid",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.User": {
+      "name": "User",
+      "schema": "",
+      "columns": {
+        "userid": {
+          "name": "userid",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "role": {
+          "name": "role",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdat": {
+          "name": "createdat",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "User_email_key": {
+          "columns": [
+            "email"
+          ],
+          "nullsNotDistinct": false,
+          "name": "User_email_key"
+        }
+      },
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.client": {
+      "name": "client",
+      "schema": "",
+      "columns": {
+        "clientid": {
+          "name": "clientid",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "industry": {
+          "name": "industry",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "maincontact": {
+          "name": "maincontact",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdat": {
+          "name": "createdat",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.report": {
+      "name": "report",
+      "schema": "",
+      "columns": {
+        "reportid": {
+          "name": "reportid",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(256)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "summary": {
+          "name": "summary",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdat": {
+          "name": "createdat",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "updatedat": {
+          "name": "updatedat",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "clientid": {
+          "name": "clientid",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "verticalid": {
+          "name": "verticalid",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdbyuserid": {
+          "name": "createdbyuserid",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "filelink": {
+          "name": "filelink",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "idx_report_client": {
+          "name": "idx_report_client",
+          "columns": [
+            {
+              "expression": "clientid",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_report_created_at": {
+          "name": "idx_report_created_at",
+          "columns": [
+            {
+              "expression": "createdat",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "timestamp_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_report_vertical": {
+          "name": "idx_report_vertical",
+          "columns": [
+            {
+              "expression": "verticalid",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "report_clientid_fkey": {
+          "name": "report_clientid_fkey",
+          "tableFrom": "report",
+          "tableTo": "client",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "clientid"
+          ],
+          "columnsTo": [
+            "clientid"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "report_verticalid_fkey": {
+          "name": "report_verticalid_fkey",
+          "tableFrom": "report",
+          "tableTo": "vertical",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "verticalid"
+          ],
+          "columnsTo": [
+            "verticalid"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "report_createdbyuserid_fkey": {
+          "name": "report_createdbyuserid_fkey",
+          "tableFrom": "report",
+          "tableTo": "User",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "createdbyuserid"
+          ],
+          "columnsTo": [
+            "userid"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.reportsection": {
+      "name": "reportsection",
+      "schema": "",
+      "columns": {
+        "sectionid": {
+          "name": "sectionid",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "reportid": {
+          "name": "reportid",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sectionname": {
+          "name": "sectionname",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "idx_section_report": {
+          "name": "idx_section_report",
+          "columns": [
+            {
+              "expression": "reportid",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "reportsection_reportid_fkey": {
+          "name": "reportsection_reportid_fkey",
+          "tableFrom": "reportsection",
+          "tableTo": "report",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "reportid"
+          ],
+          "columnsTo": [
+            "reportid"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.sectionitem": {
+      "name": "sectionitem",
+      "schema": "",
+      "columns": {
+        "itemid": {
+          "name": "itemid",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "sectionid": {
+          "name": "sectionid",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "itemtitle": {
+          "name": "itemtitle",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "content": {
+          "name": "content",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "type": {
+          "name": "type",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdat": {
+          "name": "createdat",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "idx_item_section": {
+          "name": "idx_item_section",
+          "columns": [
+            {
+              "expression": "sectionid",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "sectionitem_sectionid_fkey": {
+          "name": "sectionitem_sectionid_fkey",
+          "tableFrom": "sectionitem",
+          "tableTo": "reportsection",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "sectionid"
+          ],
+          "columnsTo": [
+            "sectionid"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.tag": {
+      "name": "tag",
+      "schema": "",
+      "columns": {
+        "tagid": {
+          "name": "tagid",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "category": {
+          "name": "category",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "idx_tag_category": {
+          "name": "idx_tag_category",
+          "columns": [
+            {
+              "expression": "category",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "text_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "tag_name_key": {
+          "columns": [
+            "name"
+          ],
+          "nullsNotDistinct": false,
+          "name": "tag_name_key"
+        }
+      },
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.metric": {
+      "name": "metric",
+      "schema": "",
+      "columns": {
+        "metricid": {
+          "name": "metricid",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "unit": {
+          "name": "unit",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "category": {
+          "name": "category",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.reporttag": {
+      "name": "reporttag",
+      "schema": "",
+      "columns": {
+        "reportid": {
+          "name": "reportid",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tagid": {
+          "name": "tagid",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "reporttag_reportid_fkey": {
+          "name": "reporttag_reportid_fkey",
+          "tableFrom": "reporttag",
+          "tableTo": "report",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "reportid"
+          ],
+          "columnsTo": [
+            "reportid"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "reporttag_tagid_fkey": {
+          "name": "reporttag_tagid_fkey",
+          "tableFrom": "reporttag",
+          "tableTo": "tag",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "tagid"
+          ],
+          "columnsTo": [
+            "tagid"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "reporttag_pkey": {
+          "name": "reporttag_pkey",
+          "columns": [
+            "reportid",
+            "tagid"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  },
+  "internal": {
+    "tables": {}
+  }
+}

@@ -8,5 +8,7 @@ if (!process.env.NEON_DATABASE_URL) {
 
 const sql = neon(process.env.NEON_DATABASE_URL);
 
-// We'll pass the schema here once it's generated
-export const db = drizzle(sql);
+import * as schema from '../../drizzle/schema.js';
+
+// Pass the schema to drizzle to get a fully typed client
+export const db = drizzle(sql, { schema });
