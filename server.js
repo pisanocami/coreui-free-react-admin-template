@@ -18,7 +18,7 @@ app.get('/api/health', (req, res) => {
 
 // Import the database client and the specific tables we need
 import { db } from './src/db/index.js';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { client, report, vertical, competitor, user, tag, metric, entity, socialprofile, review, adcreative, reportsection, sectionitem, insight, metricvalue, reportmedia, reporttag } from './drizzle/schema.js';
 
 app.get('/api/clients', async (req, res) => {
