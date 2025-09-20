@@ -2,7 +2,7 @@
 import React from 'react'
 import { CContainer, CRow, CCol, CButton, CCard, CCardBody, CCardHeader, CCardTitle } from '@coreui/react'
 import { useTemplatesModel } from '../hooks/useTemplatesModel'
-import { duolingoMockData, calvinkleinMockData } from '../../tools/mock-report-data.js'
+import { duolingoMockData, calvinkleinMockData } from '../mock-report-data.js'
 
 const AdminMockReports = () => {
   const {
